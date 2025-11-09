@@ -231,41 +231,23 @@ lemma hom_comp_uneq_hom_iff_uneq {l₁ l₂ : 𝔽}
 lemma comp_uneq_iff_uneq {u : k ⟶ obj f g} :
     h ≫ uneq f g = u ≫ ι₁ 1 ↔ comp_uneq_hom h hh = u
   := by
-    constructor
-    · intro h₁
-      apply ((Category.id_comp _).trans (Category.comp_id _)).symm.trans
-      apply (hom_comp_uneq_hom_iff_uneq h hh).mp
-      simp [h₁]
-    · intro h₁
-      replace h₁ : 𝟙 _ ≫ comp_uneq_hom h hh ≫ 𝟙 _ = u := by simp [h₁]
-      replace h₁ := (hom_comp_uneq_hom_iff_uneq h hh).mpr h₁
-      simp [<-h₁]
+    have i := @hom_comp_uneq_hom_iff_uneq _ _ _ _ _ h hh _ _ (𝟙 _) (𝟙 _) u
+    simp at i
+    exact i
 
 lemma comp_uneq_hom_iff_uneq {l : 𝔽} {u : obj f g ⟶ l} {v : k ⟶ l} :
     h ≫ uneq f g ≫ (u ++ 𝟙 _) = v ≫ ι₁ 1 ↔ comp_uneq_hom h hh ≫ u = v
   := by
-    constructor
-    · intro h₁
-      apply (Category.id_comp _).symm.trans
-      apply (hom_comp_uneq_hom_iff_uneq h hh).mp
-      simp [h₁]
-    · intro h₁
-      replace h₁ : 𝟙 _ ≫ comp_uneq_hom h hh ≫ u = v := by simp [h₁]
-      replace h₁ := (hom_comp_uneq_hom_iff_uneq h hh).mpr h₁
-      simp [<-h₁]
+    have i := @hom_comp_uneq_hom_iff_uneq _ _ _ _ _ h hh _ _ (𝟙 _) u v
+    simp at i
+    exact i
 
 lemma hom_comp_uneq_iff_uneq {l : 𝔽} {u : l ⟶ k} {v : l ⟶ obj f g} :
     u ≫ h ≫ uneq f g = v ≫ ι₁ 1 ↔ u ≫ comp_uneq_hom h hh = v
   := by
-    constructor
-    · intro h₁
-      apply (_ ≫= Category.comp_id _).symm.trans
-      apply (hom_comp_uneq_hom_iff_uneq h hh).mp
-      simp [h₁]
-    · intro h₁
-      replace h₁ : u ≫ comp_uneq_hom h hh ≫ 𝟙 _ = v := by simp [h₁]
-      replace h₁ := (hom_comp_uneq_hom_iff_uneq h hh).mpr h₁
-      simp [<-h₁]
+    have i := @hom_comp_uneq_hom_iff_uneq _ _ _ _ _ h hh _ _ u (𝟙 _) v
+    simp at i
+    exact i
 
 end
 
