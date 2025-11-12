@@ -519,7 +519,7 @@ theorem iso_inv_toFun_surjective {m n : IndexCategory} (h : m ≅ n) :
   Function.Surjective h.inv.toFun := iso_hom_toFun_surjective h.symm
 
 theorem iso_inv_toFun_bijective {m n : IndexCategory} (h : m ≅ n) :
-  Function.Bijective h.inv.toFun := ⟨iso_inv_toFun_injective h, iso_inv_toFun_surjective h⟩
+  Function.Bijective h.inv.toFun := iso_hom_toFun_bijective h.symm
 
 end IndexCategory
 
