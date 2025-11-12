@@ -1,15 +1,13 @@
 import Mathlib.Data.Fin.Tuple.Basic
 import Mathlib.CategoryTheory.Skeletal
-import Mathlib.CategoryTheory.IndexCategory.Basic
+import Mathlib.CategoryTheory.IndexCategory.Defs
 
 
 namespace CategoryTheory
 
 namespace IndexCategory
 
-open 𝔽
-
-lemma to_pred_not_inj {m : 𝔽} (f : m + 1 ⟶ m) : ¬ Function.Injective f := by
+lemma to_pred_fun_not_inj {m : ℕ} (f : Fin (m + 1) → Fin m) : ¬ Function.Injective f := by
   apply Function.not_injective_iff.mpr
   induction m with
   | zero => exact (f 0).elim0
@@ -59,22 +57,29 @@ lemma to_pred_not_inj {m : 𝔽} (f : m + 1 ⟶ m) : ¬ Function.Injective f := 
         apply And.intro (Fin.eq_of_val_eq (h₁.trans h₂.right.symm))
         exact h₂.left.symm
 
-lemma le_of_inj_hom {m n : 𝔽} (f : m ⟶ n) : Function.Injective f → m ≤ n := by
+lemma le_of_inj_hom {m n : IndexCategory} (f : m ⟶ n) :
+    Function.Injective f.toFun → m.len ≤ n.len := by
   intro h
   induction m with
-  | zero => exact Nat.zero_le n
+  | zero => exact zero_len.le.trans (Nat.zero_le _)
   | succ m ih =>
+    simp
     apply Nat.succ_le_of_lt
-    apply Nat.lt_of_le_of_ne (ih (castSucc ≫ f) (h.comp (Fin.castSucc_injective _)))
-    intro h
-    subst h
-    exact to_pred_not_inj f h
+    let g : Fin (m.len + 1) ⟶ Fin n.len := f.toFun ∘ Fin.cast succ_len.symm
+    have hg : Function.Injective g := h.comp (Fin.cast_injective _)
+    specialize ih (Hom.mk (g ∘ Fin.castSucc))
+    specialize ih ((congr_arg Function.Injective (Hom.toFun_mk _)).mpr
+      (hg.comp (Fin.castSucc_injective _)))
+    apply ih.lt_of_ne
+    intro he
+    obtain rfl : m = n := ext _ _ he
+    exact to_pred_fun_not_inj g hg
 
-lemma eq_of_iso {m n : 𝔽} (i : m ≅ n) : m = n := Nat.le_antisymm
-  (le_of_inj_hom i.hom (Function.LeftInverse.injective (congr_fun i.hom_inv_id)))
-  (le_of_inj_hom i.inv (Function.LeftInverse.injective (congr_fun i.inv_hom_id)))
+lemma eq_of_iso {m n : IndexCategory} (i : m ≅ n) : m = n :=
+  ext _ _ <| Nat.le_antisymm (le_of_inj_hom _ (iso_hom_toFun_injective i)) <|
+    le_of_inj_hom _ <| iso_inv_toFun_injective i
 
-theorem isSkeletal : Skeletal 𝔽 := fun _ _ h ↦ eq_of_iso h.some
+theorem isSkeletal : Skeletal IndexCategory := fun _ _ h ↦ eq_of_iso h.some
 
 end IndexCategory
 
