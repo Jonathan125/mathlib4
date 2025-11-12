@@ -1,6 +1,6 @@
 import Mathlib.Data.FinEnum
 import Mathlib.CategoryTheory.IndexCategory.Partition
-import Mathlib.CategoryTheory.IndexCategory.Basic
+import Mathlib.CategoryTheory.IndexCategory.Defs
 
 
 namespace CategoryTheory
@@ -9,17 +9,17 @@ namespace IndexCategory
 
 section Coequalizer
 
-open 𝔽 Category Nat Fin Partition Relation
+open Category Nat Fin Partition Relation
 
-variable {m n : 𝔽} (f g : m ⟶ n)
+variable {m n : IndexCategory} (f g : m ⟶ n)
 
 @[reducible]
-def relation (i j : n.fin) : Prop := ∃ k : m.fin, f k = i ∧ g k = j
+def relation (i j : Fin n.len) : Prop := ∃ k : Fin m.len, f.toFun k = i ∧ g.toFun k = j
 
-def equivalence : n.fin → n.fin → Prop := EqvGen (relation f g)
+def equivalence : Fin n.len → Fin n.len → Prop := EqvGen (relation f g)
 
-lemma condition {k : 𝔽} (h : n ⟶ k) :
-    f ≫ h = g ≫ h ↔ ∀ (i j : n.fin), equivalence f g i j → h i = h j
+lemma coeq_condition_iff_eqv_exact {k : IndexCategory} (h : n ⟶ k) :
+    f ≫ h = g ≫ h ↔ ∀ (i j : Fin n.len), equivalence f g i j → h.toFun i = h.toFun j
   := by
     constructor
     · intro he i j hr
@@ -27,47 +27,76 @@ lemma condition {k : 𝔽} (h : n ⟶ k) :
       | rel i j hr =>
         apply Exists.elim hr
         intro u ⟨h₁, h₂⟩
-        exact ((congr_arg h h₁.symm).trans (congr_fun he u)).trans (congr_arg h h₂)
+        replace he := congr_fun (congr_arg Hom.toFun he) u
+        simp at he
+        exact (congr_arg h.toFun h₁.symm).trans (he.trans (congr_arg h.toFun h₂))
       | refl i => exact Eq.refl _
       | symm i j h₁ ih => exact ih.symm
       | trans i j k h₁ h₂ ih₁ ih₂ => exact ih₁.trans ih₂
     · intro he
+      apply Hom.ext
       funext i
       simp
       apply he
       exact EqvGen.rel _ _ (Exists.intro i ⟨rfl, rfl⟩)
 
-def partition : Partition n := Partition.of_relation (relation f g)
+def partition : Partition n.len := Partition.of_relation (relation f g)
 
-def obj : 𝔽 := (partition f g).size.val
+@[inline]
+abbrev coeq_obj : IndexCategory := mk (partition f g).size.val
 
-def coeq : n ⟶ obj f g := fun i ↦ ⟨(partition f g).val i, (partition f g).inv i⟩
+@[inline, simp]
+abbrev coeq_toFun : Fin n.len → Fin (coeq_obj f g).len :=
+  Fin.cast (len_mk _).symm ∘ (partition f g).map
 
-lemma coeq_condition : f ≫ coeq f g = g ≫ coeq f g :=
-  (condition f g _).mpr (fun i j hr ↦ eq_of_val_eq (of_relation_eqv_exact _ i j hr))
+def coeq_hom : n ⟶ coeq_obj f g :=
+  Hom.mk (coeq_toFun f g)
 
-noncomputable def representatives : obj f g ⟶ n :=
-  fun i ↦ Classical.choose ((partition f g).surj (castLE (le_of_lt_succ (isLt _)) i) i.isLt)
+@[simp]
+lemma coeq_hom_toFun : (coeq_hom f g).toFun = coeq_toFun f g :=
+  Hom.toFun_mk _
 
-lemma right_inv : representatives f g ≫ coeq f g = 𝟙 (obj f g) := by
+theorem coeq_condition : f ≫ coeq_hom f g = g ≫ coeq_hom f g := by
+  apply (coeq_condition_iff_eqv_exact f g _).mpr
+  intro i j hr
+  simp
+  exact of_relation_eqvGen_exact _ i j hr
+
+@[inline, simp]
+abbrev coeq_rinv_toFun : Fin (coeq_obj f g).len → Fin n.len :=
+  (partition f g).rep ∘ Fin.cast (len_mk _)
+
+def coeq_rinv_hom : coeq_obj f g ⟶ n :=
+  Hom.mk (coeq_rinv_toFun f g)
+
+@[simp]
+lemma coeq_rinv_hom_toFun : (coeq_rinv_hom f g).toFun = coeq_rinv_toFun f g :=
+  Hom.toFun_mk _
+
+@[reassoc (attr := simp)]
+theorem right_comp_id : coeq_rinv_hom f g ≫ coeq_hom f g = 𝟙 (coeq_obj f g) :=
+  by ext i ; simp [Function.comp, Fin.cast]
+
+lemma left_comp_mapEq (i : Fin n.len) :
+    (partition f g).mapEq ((coeq_hom f g ≫ coeq_rinv_hom f g).toFun i) i :=
+  by ext ; simp
+
+variable {k : IndexCategory} (h : n ⟶ k)
+
+def desc : coeq_obj f g ⟶ k :=
+  coeq_rinv_hom f g ≫ h
+
+lemma fac (hh : f ≫ h = g ≫ h) : coeq_hom f g ≫ desc f g h = h := by
+  apply Hom.ext
   funext i
-  apply Fin.eq_of_val_eq
-  exact (Classical.choose_spec
-    ((partition f g).surj (castLE (le_of_lt_succ (isLt _)) i) i.isLt)).symm
+  rw [desc, <-Category.assoc, comp_toFun]
+  dsimp
+  apply (coeq_condition_iff_eqv_exact f g h).mp hh
+  apply of_relation_eqvGen_sound
+  exact left_comp_mapEq _ _ i
 
-lemma left_rel (i : n.fin) : (partition f g).rel ((coeq f g ≫ representatives f g) i) i := by
-  change ((coeq f g ≫ representatives f g ≫ coeq f g) i).val = (coeq f g i).val
-  exact congr_arg _ (congr_fun ((_ ≫= right_inv f g).trans (comp_id _)) i)
-
-variable {k : 𝔽} (h : n ⟶ k)
-
-noncomputable def desc : obj f g ⟶ k := representatives f g ≫ h
-
-lemma fac (hh : f ≫ h = g ≫ h) : coeq f g ≫ desc f g h = h :=
-  funext (fun i ↦ (condition f g h).mp hh _ _ (of_relation_eqv_sound _ _ _ (left_rel f g i)))
-
-lemma uniq (s : obj f g ⟶ k) (hs : coeq f g ≫ s = h) : s = desc f g h :=
-  (id_comp _).symm.trans (((right_inv _ _).symm =≫ _).trans ((assoc _ _ _).trans (_ ≫= hs)))
+lemma uniq (s : coeq_obj f g ⟶ k) (hs : coeq_hom f g ≫ s = h) : s = desc f g h :=
+  (id_comp _).symm.trans <| ((right_comp_id _ _).symm =≫ _).trans <| (assoc _ _ _).trans (_ ≫= hs)
 
 end Coequalizer
 

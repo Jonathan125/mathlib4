@@ -1,112 +1,130 @@
 import Mathlib.Data.Nat.Basic
 import Mathlib.Order.Basic
 import Mathlib.Logic.Relation
-
+import Mathlib.CategoryTheory.Category.Basic
 
 namespace Fin
 
 open Nat LT LE Relation
 
-def decr {n : ℕ} (i : Fin n) : Fin n :=
-  ⟨i.val - 1, (pred_le _).trans_lt (isLt _)⟩
-
 section
 
 variable {n : ℕ} (r : Fin n → Fin n → Prop)
 
-def weakened (i j : Fin (n + 1)) : Fin n → Fin n → Prop :=
+def weaken_rel (i j : Fin (n + 1)) : Fin n → Fin n → Prop :=
   fun i' j' ↦ (i'.val < i.val ∨ i'.val = i.val ∧ j'.val < j.val) ∧ r i' j'
 
-lemma weakened_step (i : Fin n) (i' j' : Fin n) :
-    weakened r i.castSucc (last n) i' j' ↔ weakened r i.succ 0 i' j'
-  := by
-    constructor
-    · intro ⟨hw, hr⟩
-      apply And.intro _ hr
-      apply hw.elim
-      · intro hl
-        exact Or.inl (hl.trans (lt_succ_self _))
-      · intro ⟨hl, _⟩
-        exact Or.inl ((lt_succ_self _).trans_eq' hl)
-    · intro ⟨hw, hr⟩
-      apply And.intro _ hr
-      apply hw.elim
-      · intro hl
-        if hi : i'.val = i.val then
-          exact Or.inr ⟨hi, j'.isLt⟩
-        else
-          exact Or.inl ((le_of_lt_succ hl).lt_of_ne hi)
-      · intro ⟨_, hn⟩
-        exact False.elim (Nat.not_lt_zero _ hn)
+lemma weaken_succ (i : Fin n) (i' j' : Fin n) :
+    weaken_rel r i.castSucc (last n) i' j' ↔ weaken_rel r i.succ 0 i' j' := by
+  constructor
+  · intro ⟨hw, hr⟩
+    apply And.intro _ hr
+    apply hw.elim
+    · intro hl
+      exact Or.inl (hl.trans (lt_succ_self _))
+    · intro ⟨hl, _⟩
+      exact Or.inl ((lt_succ_self _).trans_eq' hl)
+  · intro ⟨hw, hr⟩
+    apply And.intro _ hr
+    apply hw.elim
+    · intro hl
+      if hi : i'.val = i.val then
+        exact Or.inr ⟨hi, j'.isLt⟩
+      else
+        exact Or.inl ((le_of_lt_succ hl).lt_of_ne hi)
+    · intro ⟨_, hn⟩
+      exact False.elim (Nat.not_lt_zero _ hn)
 
-lemma weakened_id (j : Fin (n + 1)) (i' j' : Fin n) :
-  weakened r (last n) j i' j' ↔ r i' j' := Iff.intro And.right (⟨Or.inl i'.isLt, ·⟩)
+lemma weaken_last (j : Fin (n + 1)) (i' j' : Fin n) : weaken_rel r (last n) j i' j' ↔ r i' j' :=
+  Iff.intro And.right (⟨Or.inl i'.isLt, ·⟩)
 
 end
 
 structure Partition (n : ℕ) where
-  map : Fin n → Fin n
   size : Fin (n + 1)
-  inv : ∀ (i : Fin n), (map i).val < size.val
-  surj : ∀ (i : Fin n), i.val < size.val → ∃ j : Fin n, i.val = (map j).val
+  map : Fin n → Fin size.val
+  rep : Fin size.val → Fin n
+  rinv : map ∘ rep = id
+  min : ∀ (i : Fin n) (j : Fin size.val), map i = j → rep j ≤ i
+  mono : ∀ (i j : Fin size.val), i < j → rep i < rep j
 
 namespace Partition
 
-@[reducible]
-def id (n : ℕ) : Partition n where
-  map := (·)
-  size := last n
-  inv := isLt
-  surj := fun i _ ↦ Exists.intro i rfl
+section
 
-variable {n : ℕ}
+variable {n : ℕ} (p : Partition n)
+
+theorem size_ne_zero_of_fin (i : Fin n) : p.size ≠ 0 :=
+  Fin.pos_iff_ne_zero.mp ((Nat.zero_le _).trans_lt (p.map i).isLt)
+
+@[simp]
+theorem map_rep_id (i : Fin p.size.val) : p.map (p.rep i) = i :=
+  congr_fun p.rinv i
+
+variable (i j : Fin n)
+
+@[inline]
+abbrev mapEq : Prop :=
+  p.map i = p.map j
+
+@[inline]
+abbrev mapLT : Prop :=
+  p.map i < p.map j
+
+@[inline]
+abbrev mapGT : Prop :=
+  p.map j < p.map i
+
+theorem mapGT_symm : p.mapLT i j → p.mapGT j i :=
+  id
+
+theorem mapLT_symm : p.mapGT i j → p.mapLT j i :=
+  id
+
+theorem zero_lt_map_of_lt (h : p.mapLT i j) : 0 < (p.map j).val :=
+  (Nat.zero_le _).trans_lt h
+
+theorem zero_lt_map_of_gt (h : p.mapGT i j) : 0 < (p.map i).val :=
+  (Nat.zero_le _).trans_lt h
+
+protected def splitOn {α : Sort*} : (p.mapEq i j → α) → (p.mapLT i j → α) → (p.mapGT i j → α) → α :=
+  fun h₁ h₂ h₃ ↦
+  if heq : p.mapEq i j then h₁ heq else
+  if hlt : p.mapLT i j then h₂ hlt else
+  h₃ (Fin.lt_iff_le_and_ne.mpr ⟨Fin.not_lt.mp hlt, Ne.symm heq⟩)
+
+theorem splitOn_eq {α : Sort*} {h₁ : p.mapEq i j → α} {h₂ : p.mapLT i j → α} {h₃ : p.mapGT i j → α}
+    (h : p.mapEq i j) : p.splitOn i j h₁ h₂ h₃ = h₁ h :=
+  dite_cond_eq_true (eq_true_intro h)
+
+theorem splitOn_lt {α : Sort*} {h₁ : p.mapEq i j → α} {h₂ : p.mapLT i j → α} {h₃ : p.mapGT i j → α}
+    (h : p.mapLT i j) : p.splitOn i j h₁ h₂ h₃ = h₂ h :=
+  (dite_cond_eq_false (eq_false_intro (Fin.ne_of_lt h))).trans <|
+    dite_cond_eq_true (eq_true_intro h)
+
+theorem splitOn_gt {α : Sort*} {h₁ : p.mapEq i j → α} {h₂ : p.mapLT i j → α} {h₃ : p.mapGT i j → α}
+    (h : p.mapGT i j) : p.splitOn i j h₁ h₂ h₃ = h₃ h
+  :=
+    (dite_cond_eq_false (eq_false_intro (Fin.ne_of_gt h))).trans <|
+      dite_cond_eq_false (eq_false_intro (Fin.not_lt.mpr (Fin.le_of_lt h)))
+
+end
 
 section
 
-variable (p : Partition n)
+variable {n : ℕ} (p : Partition n) (r : Fin n → Fin n → Prop)
 
-@[inline]
-abbrev val (i : Fin n) : ℕ := (p.map i).val
+def sound : Prop := ∀ i j : Fin n, p.mapEq i j → r i j
 
-@[inline]
-abbrev pred (i : Fin n) : Fin n := (p.map i).decr
+def exact : Prop := ∀ i j : Fin n, r i j → p.mapEq i j
 
-@[inline]
-abbrev rel (i j : Fin n) : Prop := p.val i = p.val j
+theorem lift_sound (r' : Fin n → Fin n → Prop) : (∀ i j, r i j → r' i j) → p.sound r → p.sound r' :=
+  fun hmp hr _ _ he ↦ hmp _ _ (hr _ _ he)
 
-@[inline]
-abbrev lt (i j : Fin n) : Prop := p.val i < p.val j
+theorem lift_exact (r' : Fin n → Fin n → Prop) : (∀ i j, r i j → r' i j) → p.exact r' → p.exact r :=
+  fun hmp hr _ _ he ↦ hr _ _ (hmp _ _ he)
 
-section
-
-variable (r : Fin n → Fin n → Prop)
-
-def sound : Prop := ∀ i j : Fin n, p.rel i j → r i j
-
-def exact : Prop := ∀ i j : Fin n, r i j → p.rel i j
-
-lemma identity_eqv_sound : (id n).sound (EqvGen r) := by
-  intro i j hp
-  simp [rel, val] at hp
-  obtain rfl : i = j := eq_of_val_eq hp
-  exact EqvGen.refl _
-
-lemma identity_weakened_trivial_exact : (id n).exact (weakened r 0 0) := by
-  intro i j ⟨hw, hr⟩
-  apply hw.elim
-  · intro h
-    exact False.elim (Nat.not_lt_zero _ h)
-  · intro ⟨_, h⟩
-    exact False.elim (Nat.not_lt_zero _ h)
-
-lemma exact_ext (r' : Fin n → Fin n → Prop) :
-    (∀ i j : Fin n, r i j ↔ r' i j) → (p.exact r ↔ p.exact r')
-  := by
-    intro h
-    obtain rfl : r = r' := funext₂ (fun i j ↦ Iff.eq (h i j))
-    exact ⟨(·), (·)⟩
-
-lemma eqv_exact_of_rel_exact : p.exact r → p.exact (EqvGen r) := by
+theorem eqvGen_exact_of_exact : p.exact r → p.exact (EqvGen r) := by
   intro h i j hr
   induction hr with
   | rel i j hr => exact h _ _ hr
@@ -118,221 +136,322 @@ end
 
 section
 
-variable {i j : Fin n}
+variable (n : ℕ)
 
 @[reducible]
-def merge_map (_ : p.lt i j) (i' : Fin n) : Fin n :=
-  if p.lt i' j then p.map i' else if p.rel i' j then p.map i else p.pred i'
-
-variable (h : p.lt i j) (i' : Fin n)
-
-lemma merge_map_val_of_lt : p.lt i' j → (p.merge_map h i').val = p.val i' := by
-  intro hlt
-  simp [val, merge_map, hlt]
-
-lemma merge_map_val_of_eq : p.rel i' j → (p.merge_map h i').val = p.val i := by
-  intro heq
-  simp [val, merge_map, heq, eq_true_intro heq]
-
-lemma merge_map_val_of_gt : ¬ p.lt i' j → ¬ p.rel i' j → (p.merge_map h i').val = p.pred i' := by
-  intro hle hne
-  simp [val, merge_map, hle, eq_false_intro hne]
-
-lemma merge_map_val_lt_val_of_not_lt : ¬ p.lt i' j → (p.merge_map h i').val < p.val i' := by
-  intro h₁
-  if h₂ : p.rel i' j then
-    apply (p.merge_map_val_of_eq _ _ h₂).le.trans_lt
-    exact h.trans_le h₂.symm.le
-  else
-    apply (p.merge_map_val_of_gt _ _ h₁ h₂).le.trans_lt
-    exact pred_lt (Nat.ne_zero_of_lt ((le_of_not_gt h₁).lt_of_ne (Ne.symm h₂)))
-
-lemma merge_map_val_le_val : (p.merge_map h i').val ≤ p.val i' :=
-  if h₁ : p.lt i' j then (p.merge_map_val_of_lt _ _ h₁).le
-  else (p.merge_map_val_lt_val_of_not_lt _ _ h₁).le
-
-lemma merge_map_inv : (p.merge_map h i').val < p.size.val - 1 :=
-  if h₁ : p.lt i' j then
-    (p.merge_map_val_le_val h i').trans_lt (h₁.trans_le (le_pred_of_lt (p.inv j)))
-  else
-    (p.merge_map_val_lt_val_of_not_lt h i' h₁).trans_le (le_pred_of_lt (p.inv _))
-
-lemma merge_map_surj : i'.val < p.size.val - 1 → ∃ j' : Fin n, i'.val = (p.merge_map h j').val := by
-  intro h₁
-  if h₂ : i'.val < p.val j then
-    apply Exists.elim (p.surj i' (h₂.trans (p.inv j)))
-    intro j' h₃
-    apply Exists.intro j'
-    exact h₃.trans (p.merge_map_val_of_lt h j' (h₃.symm.le.trans_lt h₂)).symm
-  else
-    have h₃ : i'.val + 1 < p.size.val := succ_lt_of_lt_pred h₁
-    apply Exists.elim (p.surj ⟨i'.val + 1, h₃.trans_le (le_of_lt_succ p.size.isLt)⟩ h₃)
-    intro j' (h₄ : i'.val + 1 = p.val j')
-    apply Exists.intro j'
-    apply (Nat.eq_sub_of_add_eq h₄).trans
-    have h₅ := (le_of_not_gt h₂).trans_lt (lt_of_succ_le h₄.le)
-    exact (p.merge_map_val_of_gt h j' (not_lt_of_gt h₅) h₅.ne').symm
-
-def merge' : Partition n where
-  map := p.merge_map h
-  size := p.size.decr
-  inv := p.merge_map_inv h
-  surj := p.merge_map_surj h
-
-lemma merge'_val_of_lt : p.lt i' j → (p.merge' h).val i' = p.val i' :=
-  p.merge_map_val_of_lt h i'
-
-lemma merge'_val_of_eq : p.rel i' j → (p.merge' h).val i' = p.val i :=
-  p.merge_map_val_of_eq h i'
-
-lemma merge'_val_of_gt : ¬ p.lt i' j → ¬ p.rel i' j → (p.merge' h).val i' = p.pred i' :=
-  p.merge_map_val_of_gt h i'
-
-lemma merge'_val_eq_iff_rel_or_rel : (p.merge' h).val i' = p.val i ↔ p.rel i' i ∨ p.rel i' j := by
-  if h₁ : p.lt i' j then
-    rw [p.merge'_val_of_lt _ _ h₁]
-    apply iff_self_or.mpr
-    intro h₂
-    exact False.elim (h₁.ne h₂)
-  else
-    have h₁' : p.val j ≤ p.val i' := le_of_not_gt h₁
-    simp [(h.trans_le h₁').ne']
-    if h₂ : p.rel i' j then
-      rw [eq_true_intro (p.merge'_val_of_eq _ _ h₂)]
-      exact (true_iff _).to_iff.mpr h₂
-    else
-      rw [p.merge'_val_of_gt _ _ h₁ h₂, eq_false_intro h₂]
-      apply (iff_false _).to_iff.mpr
-      exact lt.ne' (h.trans_le (le_pred_of_lt (h₁'.lt_of_ne (Ne.symm h₂))))
-
-lemma merge'_val_lt_iff_val_le : (p.merge' h).val i' < p.val j ↔ p.val i' ≤ p.val j := by
-  if h₁ : p.lt i' j then
-    rw [p.merge'_val_of_lt _ _ h₁]
-    exact ⟨(lt.le ·), (le.lt_of_ne · h₁.ne)⟩
-  else
-    if h₂ : p.rel i' j then
-      rw [p.merge'_val_of_eq _ _ h₂, eq_true_intro h₂.le]
-      exact (iff_true _).to_iff.mpr h
-    else
-      have h₃ := (le_of_not_gt h₁).lt_of_ne (Ne.symm h₂)
-      rw [p.merge'_val_of_gt _ _ h₁ h₂,eq_false_intro (not_le_of_gt h₃)]
-      exact (iff_false _).to_iff.mpr (not_lt_of_ge (le_pred_of_lt h₃))
-
-variable (j' : Fin n)
-
-lemma merge'_rel_of_rel : p.rel i' j' → (p.merge' h).rel i' j' := by
-  intro hr
-  unfold rel
-  if h₁ : p.lt i' j then
-    apply (p.merge'_val_of_lt _ _ h₁).trans
-    exact hr.trans (p.merge'_val_of_lt _ _ (hr.symm.le.trans_lt h₁)).symm
-  else if h₂ : p.rel i' j then
-    apply (p.merge'_val_of_eq _ _ h₂).trans
-    exact (p.merge'_val_of_eq _ _ (hr.symm.trans h₂)).symm
-  else
-    apply (p.merge'_val_of_gt _ _ h₁ h₂).trans
-    simp [pred, decr, hr]
-    apply (p.merge'_val_of_gt _ _ _ (Eq.trans_ne hr.symm h₂)).symm
-    exact not_lt_of_ge ((le_of_not_gt h₁).trans hr.le)
-
-lemma merge'_rel_iff : (p.merge' h).rel i' j' ↔
-    p.rel i' j' ∨ p.rel i' i ∧ p.rel j' j ∨ p.rel i' j ∧ p.rel j' i
-  := by
-    constructor
-    · intro hr
-      unfold rel at hr
-      if h₁ : p.lt i' j then
-        rw [p.merge'_val_of_lt _ _ h₁] at hr
-        if h₂ : p.rel i' i then
-          apply ((p.merge'_val_eq_iff_rel_or_rel h j').mp (hr.symm.trans h₂)).elim
-          · intro h₃
-            exact Or.inl (h₂.trans h₃.symm)
-          · intro h₃
-            exact Or.inr (Or.inl ⟨h₂, h₃⟩)
-        else
-          have h₃ := (not_or.mp ((p.merge'_val_eq_iff_rel_or_rel h j').not.mp
-            (hr.symm.trans_ne h₂))).right
-          have h₄ : p.lt j' j := by
-            apply le.lt_of_ne _ h₃
-            exact (p.merge'_val_lt_iff_val_le h _).mp (hr.symm.le.trans_lt h₁)
-          rw [p.merge'_val_of_lt _ _ h₄] at hr
-          exact Or.inl hr
-      else
-        if h₂ : p.rel i' j then
-          rw [p.merge'_val_of_eq _ _ h₂] at hr
-          apply ((p.merge'_val_eq_iff_rel_or_rel h j').mp hr.symm).elim
-          · intro h₃
-            exact Or.inr (Or.inr ⟨h₂, h₃⟩)
-          · intro h₃
-            exact Or.inl (h₂.trans h₃.symm)
-        else
-          rw [p.merge'_val_of_gt _ _ h₁ h₂] at hr
-          have h₃ := (le_of_not_gt h₁).lt_of_ne (Ne.symm h₂)
-          have h₄ := le_of_lt_succ (h₃.trans_eq (Nat.eq_add_of_sub_eq (one_le_of_lt h₃) hr))
-          replace h₄ := lt_of_not_ge ((p.merge'_val_lt_iff_val_le h j').not.mp (not_lt_of_ge h₄))
-          rw [p.merge'_val_of_gt h j' (not_lt_of_gt h₄) h₄.ne'] at hr
-          apply Or.inl
-          apply (Nat.eq_add_of_sub_eq (one_le_of_lt h₃) hr).trans
-          exact Nat.sub_add_cancel (one_le_of_lt h₄)
-    · intro h₁
-      apply h₁.elim (p.merge'_rel_of_rel _ _ _)
-      clear h₁
-      intro h₁
-      unfold rel
-      apply h₁.elim
-      · intro ⟨h₂, h₃⟩
-        apply ((p.merge'_val_eq_iff_rel_or_rel h i').mpr (Or.inl h₂)).trans
-        exact ((p.merge'_val_eq_iff_rel_or_rel h j').mpr (Or.inr h₃)).symm
-      · intro ⟨h₂, h₃⟩
-        apply ((p.merge'_val_eq_iff_rel_or_rel h i').mpr (Or.inr h₂)).trans
-        exact ((p.merge'_val_eq_iff_rel_or_rel h j').mpr (Or.inl h₃)).symm
-
-end
-
-section
-
-variable (i j : Fin n)
-
-def merge : Partition n :=
-  if h₁ : p.rel i j then p else if h₂ : p.lt i j then p.merge' h₂
-  else p.merge' ((le_of_not_gt h₂).lt_of_ne (Ne.symm h₁))
-
-variable (i' j' : Fin n)
-
-lemma merge_rel_iff : (p.merge i j).rel i' j' ↔
-    p.rel i' j' ∨ p.rel i' i ∧ p.rel j' j ∨ p.rel i' j ∧ p.rel j' i
-  := by
-    if h₁ : p.rel i j then
-      unfold merge
-      simp [eq_true_intro h₁]
-      intro h
-      apply h.elim
-      · intro h₂
-        exact h₂.left.trans (h₁.trans h₂.right.symm)
-      · intro h₂
-        exact h₂.left.trans (h₁.symm.trans h₂.right.symm)
-    else
-      if h₂ : p.lt i j then
-        unfold merge
-        simp [h₁, h₂]
-        exact p.merge'_rel_iff h₂ i' j'
-      else
-        unfold merge
-        simp [h₁, h₂]
-        conv_rhs => arg 2 ; rw [Or.comm]
-        exact p.merge'_rel_iff ((le_of_not_gt h₂).lt_of_ne (Ne.symm h₁)) i' j'
-
-end
-
-section
+def id (n : ℕ) : Partition n where
+  size := last n
+  map := (·)
+  rep := (·)
+  rinv := rfl
+  min := fun _ _ h ↦ Fin.le_of_eq h.symm
+  mono := fun _ _ ↦ (·)
 
 variable (r : Fin n → Fin n → Prop)
+
+theorem id_eqvGen_sound : (id n).sound (EqvGen r) := by
+  intro i j he
+  simp [mapEq] at he
+  obtain rfl : i = j := he
+  exact EqvGen.refl _
+
+theorem id_weaken_trivial_exact : (id n).exact (weaken_rel r 0 0) := by
+  intro i j ⟨hw, hr⟩
+  apply hw.elim
+  · intro h
+    exact False.elim (Nat.not_lt_zero _ h)
+  · intro ⟨_, h⟩
+    exact False.elim (Nat.not_lt_zero _ h)
+
+end
+
+section
+
+variable {n : ℕ} (p : Partition n) {l u : Fin n}
+
+def mergeLT_size (_ : p.mapLT l u) : Fin (n + 1) :=
+  (p.size.pred (p.size_ne_zero_of_fin l)).castSucc
+
+def mergeLT_fin_of_lt (i : Fin n) {j : Fin n} (h : p.mapLT i j) : Fin (p.mergeLT_size h) :=
+  ⟨(p.map i).val, h.trans_le (Nat.le_pred_of_lt (p.map j).isLt)⟩
+
+def mergeLT_fin_of_gt (i : Fin n) {j : Fin n} (h : p.mapGT i j) : Fin (p.mergeLT_size h) :=
+  ⟨(p.map i).val - 1, Nat.pred_lt_pred (Nat.ne_zero_of_lt h) (p.map i).isLt⟩
+
+def mergeLT_map (h : p.mapLT l u) (i : Fin n) : Fin (p.mergeLT_size h).val :=
+  p.splitOn i u
+    (fun _ ↦ p.mergeLT_fin_of_lt l h)
+    (fun h ↦ p.mergeLT_fin_of_lt i h)
+    (fun h ↦ p.mergeLT_fin_of_gt i h)
+
+@[simp]
+lemma mergeLT_fin_of_lt_val (i : Fin n) {j : Fin n} (h : p.mapLT i j) :
+    (p.mergeLT_fin_of_lt i h).val = (p.map i).val := rfl
+
+@[simp]
+lemma mergeLT_fin_of_gt_val (i : Fin n) {j : Fin n} (h : p.mapGT i j) :
+    (p.mergeLT_fin_of_gt i h).val = (p.map i).val - 1 := rfl
+
+@[simp]
+lemma mergeLT_map_of_eq (h : p.mapLT l u) (i : Fin n) (h' : p.mapEq i u) :
+    (p.mergeLT_map h i).val = (p.map l).val :=
+  congr_arg _ (p.splitOn_eq _ _ h')
+
+@[simp]
+lemma mergeLT_map_of_lt (h : p.mapLT l u) (i : Fin n) (h' : p.mapLT i u) :
+    (p.mergeLT_map h i).val = (p.map i).val :=
+  congr_arg _ (p.splitOn_lt _ _ h')
+
+@[simp]
+lemma mergeLT_map_of_gt (h : p.mapLT l u) (i : Fin n) (h' : p.mapGT i u) :
+    (p.mergeLT_map h i).val = (p.map i).val - 1 :=
+  congr_arg _ (p.splitOn_gt _ _ h')
+
+lemma mergeLT_map_lt_map_of_gt (h : p.mapLT l u) (i : Fin n) (h' : p.mapGT i u) :
+    (p.mergeLT_map h i).val < (p.map i).val :=
+  (p.mergeLT_map_of_gt _ _ h').le.trans_lt (Nat.pred_lt_of_lt h')
+
+lemma mergeLT_map_le_map (h : p.mapLT l u) (i : Fin n) :
+    (p.mergeLT_map h i).val ≤ (p.map i).val :=
+  p.splitOn i u
+    (fun h' ↦ (p.mergeLT_map_of_eq _ _ h').le.trans (h.trans_eq h'.symm).le)
+    (fun h' ↦ (p.mergeLT_map_of_lt _ _ h').le)
+    (fun h' ↦ (p.mergeLT_map_lt_map_of_gt _ _ h').le)
+
+theorem mergeLT_map_eq_lower_iff_eq_or_eq (h : p.mapLT l u) (i : Fin n) :
+    (p.mergeLT_map h i).val = (p.map l).val ↔ p.mapEq i l ∨ p.mapEq i u
+  := by
+    apply p.splitOn i u
+    · intro h'
+      exact eq_true_intro (p.mergeLT_map_of_eq _ _ h') ▸ (true_iff _).mpr (Or.inr h')
+    · intro h'
+      rw [p.mergeLT_map_of_lt _ _ h']
+      apply Fin.ext_iff.symm.trans
+      apply iff_self_or.mpr fun he ↦ False.elim (Fin.ne_of_lt h' he)
+    · intro h'
+      simp [Fin.ne_of_gt h', Fin.ne_of_gt (Fin.lt_trans h h'), h']
+      exact Nat.ne_of_lt' (h.trans_le (Nat.le_pred_of_lt h'))
+
+theorem mergeLT_map_lt_upper_iff_eq_or_lt (h : p.mapLT l u) (i : Fin n) :
+    (p.mergeLT_map h i).val < (p.map u).val ↔ p.mapEq i u ∨ p.mapLT i u
+  := by
+    apply p.splitOn i u
+    · intro h'
+      simp [eq_true_intro h']
+      exact h
+    · intro h'
+      simp [p.mergeLT_map_of_lt _ _ h', Fin.ne_of_lt h']
+      exact Fin.lt_iff_val_lt_val
+    · intro h'
+      simp [p.mergeLT_map_of_gt _ _ h', Fin.ne_of_gt h']
+      simp [Fin.not_lt.mpr (Fin.le_of_lt h')]
+      apply Nat.le_pred_of_lt h'
+
+theorem mergeLT_map_eq_of_map_eq (h : p.mapLT l u) (i j : Fin n) :
+    p.mapEq i j → p.mergeLT_map h i = p.mergeLT_map h j
+  := by
+    intro h₁
+    apply p.splitOn i u
+    · intro h₂
+      apply Fin.eq_of_val_eq
+      apply (p.mergeLT_map_of_eq _ _ h₂).trans
+      apply ((p.mergeLT_map_eq_lower_iff_eq_or_eq h j).mpr _).symm
+      exact Or.inr (h₁.symm.trans h₂)
+    · intro h₂
+      apply Fin.eq_of_val_eq
+      apply (p.mergeLT_map_of_lt _ _ h₂).trans
+      apply (Fin.val_eq_of_eq h₁).trans
+      exact (p.mergeLT_map_of_lt _ _ (h₁.symm.trans_lt h₂)).symm
+    · intro h₂
+      apply Fin.eq_of_val_eq
+      apply (p.mergeLT_map_of_gt _ _ h₂).trans
+      rw [h₁]
+      exact (p.mergeLT_map_of_gt _ _ (h₂.trans_eq h₁)).symm
+
+theorem mergeLT_map_eq_iff (h : p.mapLT l u) (i j : Fin n) :
+    p.mergeLT_map h i = p.mergeLT_map h j ↔
+    p.mapEq i j ∨ p.mapEq i l ∧ p.mapEq j u ∨ p.mapEq i u ∧ p.mapEq j l
+  := by
+    apply p.splitOn i u
+    · intro h₁
+      simp [eq_true_intro h₁, Fin.ne_of_gt (h.trans_eq h₁.symm)]
+      apply Fin.ext_iff.trans
+      rw [p.mergeLT_map_of_eq _ _ h₁]
+      apply Eq.comm.trans
+      apply (p.mergeLT_map_eq_lower_iff_eq_or_eq h j).trans
+      apply Or.comm.trans
+      apply or_congr_left
+      constructor
+      · intro h₂
+        exact h₁.trans h₂.symm
+      · intro h₂
+        exact h₂.symm.trans h₁
+    · intro h₁
+      simp [Fin.ne_of_lt h₁]
+      apply Fin.ext_iff.trans
+      rw [p.mergeLT_map_of_lt _ _ h₁]
+      if h₂ : p.mapEq i l then
+        rw [Fin.val_eq_of_eq h₂, eq_true_intro h₂]
+        apply Eq.comm.trans
+        apply (p.mergeLT_map_eq_lower_iff_eq_or_eq h j).trans
+        simp
+        apply or_congr_left
+        constructor
+        · intro h₃
+          exact h₂.trans h₃.symm
+        · intro h₃
+          exact h₃.symm.trans h₂
+      else
+        rw [eq_false_intro h₂]
+        simp
+        constructor
+        · intro h₃
+          apply ((p.mergeLT_map_lt_upper_iff_eq_or_lt h j).mp (h₃.symm.trans_lt h₁)).elim
+          · intro h₄
+            rw [p.mergeLT_map_of_eq _ _ h₄] at h₃
+            exact False.elim (h₂ (Fin.eq_of_val_eq h₃))
+          · intro h₄
+            rw [p.mergeLT_map_of_lt _ _ h₄] at h₃
+            exact Fin.eq_of_val_eq h₃
+        · intro h₃
+          simp [h₃.symm.trans_lt h₁]
+          exact Fin.val_eq_of_eq h₃
+    · intro h₁
+      simp [Fin.ne_of_gt h₁, Fin.ne_of_gt (Fin.lt_trans h h₁)]
+      apply Iff.intro _ (p.mergeLT_map_eq_of_map_eq h _ _)
+      intro h₂
+      replace h₂ := ((p.mergeLT_map_of_gt _ _ h₁)).symm.trans (Fin.val_eq_of_eq h₂)
+      have h₃ := Nat.not_lt_of_le ((Nat.le_pred_of_lt h₁).trans_eq h₂)
+      have ⟨h₄, h₅⟩ := not_or.mp ((p.mergeLT_map_lt_upper_iff_eq_or_lt h j).not.mp h₃)
+      have h₆ := Nat.lt_of_le_of_ne (Nat.le_of_not_lt h₅) (Fin.val_ne_of_ne h₄).symm
+      rw [p.mergeLT_map_of_gt _ _ h₆] at h₂
+      exact Fin.eq_of_val_eq (Nat.pred_inj (Nat.zero_lt_of_lt h₁) (Nat.zero_lt_of_lt h₆) h₂)
+
+def mergeLT_rep (h : p.mapLT l u) (i : Fin (p.mergeLT_size h).val) : Fin n :=
+  if i.val < (p.map u).val
+  then p.rep (Fin.castLE (Nat.pred_le _) i)
+  else p.rep ⟨i.val + 1, Nat.succ_lt_of_lt_pred i.isLt⟩
+
+theorem mergeLT_rinv (h : p.mapLT l u) :
+    p.mergeLT_map h ∘ p.mergeLT_rep h = (·) := by
+  funext i
+  apply Fin.eq_of_val_eq
+  if h₁ : i.val < (p.map u).val then
+    simp [mergeLT_rep, h₁]
+    have h₂ : p.mapLT (p.rep (Fin.castLE (Nat.pred_le _) i)) u := by simp ; exact h₁
+    simp [p.mergeLT_map_of_lt _ _ h₂]
+  else
+    simp [mergeLT_rep, h₁]
+    have h₂ : p.mapGT (p.rep ⟨i.val + 1, Nat.succ_lt_of_lt_pred i.isLt⟩) u :=
+      by simp ; exact Nat.lt_succ_of_le (Nat.le_of_not_lt h₁)
+    simp [p.mergeLT_map_of_gt _ _ h₂]
+
+theorem mergeLT_min (h : p.mapLT l u) (i : Fin n) (j : Fin (p.mergeLT_size h).val) :
+    p.mergeLT_map h i = j → p.mergeLT_rep h j ≤ i
+  := by
+    intro h₁
+    replace h₁ := Fin.val_eq_of_eq h₁
+    if h₂ : j.val < (p.map u).val then
+      simp [mergeLT_rep, h₂]
+      apply p.splitOn i u
+      · intro h₃
+        exact Nat.le_trans (p.mono _ _ h₂).le (p.min i (p.map u) h₃)
+      · intro h₃
+        apply p.min
+        apply Fin.eq_of_val_eq
+        simp [p.mergeLT_map_of_lt _ _ h₃] at h₁
+        exact h₁
+      · intro h₃
+        simp [p.mergeLT_map_of_gt _ _ h₃] at h₁
+        apply Fin.le_trans
+          (Fin.le_of_lt (p.mono (Fin.castLE (Nat.pred_le _) j) (p.map i) (h₂.trans h₃)))
+        exact p.min _ _ rfl
+    else
+      simp [mergeLT_rep, h₂]
+      apply p.splitOn i u
+      · intro h₃
+        simp [mergeLT_map, p.splitOn_eq _ _ h₃] at h₁
+        exact False.elim (h₂ (h₁.symm.le.trans_lt h))
+      · intro h₃
+        simp [mergeLT_map, p.splitOn_lt _ _ h₃] at h₁
+        exact False.elim (h₂ (h₁.symm.le.trans_lt h₃))
+      · intro h₃
+        simp [p.mergeLT_map_of_gt _ _ h₃] at h₁
+        apply p.min
+        apply Fin.eq_of_val_eq
+        simp [<-h₁]
+        exact (Nat.succ_pred (Nat.ne_zero_of_lt h₃)).symm
+
+theorem mergeLT_mono (h : p.mapLT l u) (i j : Fin (p.mergeLT_size h).val) :
+    i < j → p.mergeLT_rep h i < p.mergeLT_rep h j
+  := by
+    intro h₁
+    if h₂ : j.val < (p.map u).val then
+      simp [mergeLT_rep, h₁.trans h₂, h₂]
+      exact p.mono _ _ h₁
+    else
+      if h₃ : i.val < (p.map u).val then
+        simp [mergeLT_rep, h₂, h₃]
+        apply p.mono
+        exact h₁.trans (Nat.lt_succ_self _)
+      else
+        simp [mergeLT_rep, h₂, h₃]
+        exact p.mono _ _ (Nat.add_lt_add_right h₁ _)
+
+def mergeLT (h : p.mapLT l u) : Partition n where
+  size := p.mergeLT_size h
+  map := p.mergeLT_map h
+  rep := p.mergeLT_rep h
+  rinv := p.mergeLT_rinv h
+  min := p.mergeLT_min h
+  mono := p.mergeLT_mono h
+
+theorem mergeLT_mapEq_iff (h : p.mapLT l u) (i j : Fin n) :
+    (p.mergeLT h).mapEq i j ↔ p.mapEq i j ∨ p.mapEq i l ∧ p.mapEq j u ∨ p.mapEq i u ∧ p.mapEq j l :=
+  p.mergeLT_map_eq_iff h i j
+
+end
+
+section
+
+variable {n : ℕ} (p : Partition n) (l u : Fin n)
+
+def merge : Partition n :=
+  p.splitOn l u (fun _ ↦ p) (fun h ↦ p.mergeLT h) (fun h ↦ p.mergeLT h)
+
+theorem merge_mapEq_iff (i j : Fin n) :
+    (p.merge l u).mapEq i j ↔
+    p.mapEq i j ∨ p.mapEq i l ∧ p.mapEq j u ∨ p.mapEq i u ∧ p.mapEq j l := by
+  apply p.splitOn l u
+  · intro h₁
+    rw [merge, p.splitOn_eq _ _ h₁]
+    simp
+    intro h
+    apply h.elim
+    · intro h₂
+      exact h₂.left.trans (h₁.trans h₂.right.symm)
+    · intro h₂
+      exact h₂.left.trans (h₁.symm.trans h₂.right.symm)
+  · intro h₁
+    rw [merge, p.splitOn_lt _ _ h₁]
+    exact p.mergeLT_mapEq_iff h₁ i j
+  · intro h₁
+    rw [merge, p.splitOn_gt _ _ h₁]
+    conv_rhs => arg 2 ; rw [Or.comm]
+    exact p.mergeLT_mapEq_iff h₁ i j
+
+end
+
+
+section
+
+variable {n : ℕ} (p : Partition n) (r : Fin n → Fin n → Prop)
 
 lemma merge_preserves_eqv_sound_of_rel (i j : Fin n) :
     p.sound (EqvGen r) → r i j → (p.merge i j).sound (EqvGen r)
   := by
     intro hs hr i' j' hp
-    apply ((p.merge_rel_iff i j i' j').mp hp).elim (hs i' j' ·)
+    apply ((p.merge_mapEq_iff i j i' j').mp hp).elim (hs i' j' ·)
     intro h
     apply h.elim
     · intro ⟨h₁, h₂⟩
@@ -345,11 +464,11 @@ lemma merge_preserves_eqv_sound_of_rel (i j : Fin n) :
       exact hs _ _ h₂.symm
 
 lemma merge_relaxes_weakend_exact_of_rel (i j : Fin n) :
-    p.exact (weakened r i.castSucc j.castSucc) → r i j →
-    (p.merge i j).exact (weakened r i.castSucc j.succ)
+    p.exact (weaken_rel r i.castSucc j.castSucc) → r i j →
+    (p.merge i j).exact (weaken_rel r i.castSucc j.succ)
   := by
     intro he hr i' j' ⟨hw, hr'⟩
-    apply (p.merge_rel_iff i j i' j').mpr
+    apply (p.merge_mapEq_iff i j i' j').mpr
     apply hw.elim
     · intro hi
       exact Or.inl (he i' j' ⟨Or.inl hi, hr'⟩)
@@ -364,8 +483,8 @@ lemma merge_relaxes_weakend_exact_of_rel (i j : Fin n) :
         exact Or.inl (he i j' ⟨Or.inr ⟨rfl, hj⟩, hr'⟩)
 
 lemma relaxes_weakend_exact_of_not_rel (i j : Fin n) :
-    p.exact (weakened r i.castSucc j.castSucc) → ¬ r i j →
-    p.exact (weakened r i.castSucc j.succ)
+    p.exact (weaken_rel r i.castSucc j.castSucc) → ¬ r i j →
+    p.exact (weaken_rel r i.castSucc j.succ)
   := by
     intro he hr i' j' ⟨hw, hr'⟩
     apply hw.elim
@@ -384,7 +503,7 @@ variable [∀ i j : Fin n, Decidable (r i j)] (i j : Fin n)
 
 def conditional_merge : Partition n := if r i j then p.merge i j else p
 
-lemma conditional_merge_preserves_eqv_sound :
+lemma conditional_merge_preserves_eqvGen_sound :
     p.sound (EqvGen r) → (p.conditional_merge r i j).sound (EqvGen r)
   := by
     intro hs
@@ -396,8 +515,8 @@ lemma conditional_merge_preserves_eqv_sound :
       exact hs
 
 lemma condition_merge_relaxes_weakened_exact :
-    p.exact (weakened r i.castSucc j.castSucc) →
-    (p.conditional_merge r i j).exact (weakened r i.castSucc j.succ)
+    p.exact (weaken_rel r i.castSucc j.castSucc) →
+    (p.conditional_merge r i j).exact (weaken_rel r i.castSucc j.succ)
   := by
     intro he
     if hr : r i j then
@@ -411,6 +530,7 @@ end
 
 section
 
+variable {n : ℕ} (p : Partition n)
 variable (r : Fin n → Fin n → Prop) [∀ i j : Fin n, Decidable (r i j)]
 
 def conditional_merge_rec₂ (i : Fin n) (j : ℕ) (h : j < n + 1) : Partition n :=
@@ -431,7 +551,7 @@ lemma conditional_merge_rec₂_preserves_eqv_sound (i : Fin n) (j : ℕ) (h : j 
     intro hs
     induction j with
     | zero => exact hs
-    | succ j ih => apply conditional_merge_preserves_eqv_sound ; apply ih
+    | succ j ih => apply conditional_merge_preserves_eqvGen_sound ; apply ih
 
 lemma conditional_merge_rec₁_preserves_eqv_sound (i : ℕ) (h : i < n + 1) :
     p.sound (EqvGen r) → (p.conditional_merge_rec₁ r i h).sound (EqvGen r)
@@ -442,8 +562,8 @@ lemma conditional_merge_rec₁_preserves_eqv_sound (i : ℕ) (h : i < n + 1) :
     | succ i ih => apply conditional_merge_rec₂_preserves_eqv_sound ; apply ih
 
 lemma conditional_merge_rec₂_relaxes_weakened_exact (i : Fin n) (j : ℕ) (h : j < n + 1) :
-    p.exact (weakened r i.castSucc 0) →
-    (p.conditional_merge_rec₂ r i j h).exact (weakened r i.castSucc ⟨j, h⟩)
+    p.exact (weaken_rel r i.castSucc 0) →
+    (p.conditional_merge_rec₂ r i j h).exact (weaken_rel r i.castSucc ⟨j, h⟩)
   := by
     intro he
     induction j with
@@ -451,35 +571,38 @@ lemma conditional_merge_rec₂_relaxes_weakened_exact (i : Fin n) (j : ℕ) (h :
     | succ j ih => apply condition_merge_relaxes_weakened_exact ; apply ih
 
 lemma conditional_merge_rec₁_relaxes_weakened_exact (i : ℕ) (h : i < n + 1) :
-    p.exact (weakened r 0 0) → (p.conditional_merge_rec₁ r i h).exact (weakened r ⟨i, h⟩ 0)
+    p.exact (weaken_rel r 0 0) → (p.conditional_merge_rec₁ r i h).exact (weaken_rel r ⟨i, h⟩ 0)
   := by
     intro he
     induction i with
     | zero => exact he
     | succ i ih =>
-      apply (exact_ext _ _ _ (weakened_step r ⟨i, Nat.add_lt_add_iff_right.mp h⟩)).mp
+      apply lift_exact _ _ _ (fun _ _ ↦ (weaken_succ r ⟨i, Nat.add_lt_add_iff_right.mp h⟩ _ _).mpr)
       apply conditional_merge_rec₂_relaxes_weakened_exact ; apply ih
 
 end
 
-end
+section
 
+variable {n : ℕ} (p : Partition n)
 variable (r : Fin n → Fin n → Prop) [∀ i j : Fin n, Decidable (r i j)]
 
 def of_relation : Partition n := (id n).conditional_merge_rec₁ r n (lt_succ_self n)
 
-theorem of_relation_eqv_sound : (of_relation r).sound (EqvGen r) :=
-  conditional_merge_rec₁_preserves_eqv_sound _ _ _ _ (identity_eqv_sound _)
+theorem of_relation_eqvGen_sound : (of_relation r).sound (EqvGen r) :=
+  conditional_merge_rec₁_preserves_eqv_sound _ _ _ _ (id_eqvGen_sound _ _)
 
-theorem of_relation_rel_exact : (of_relation r).exact r :=
-  (exact_ext _ _ _ (weakened_id _ _)).mp
-  (conditional_merge_rec₁_relaxes_weakened_exact _ _ _ _ (identity_weakened_trivial_exact _))
+theorem of_relation_exact : (of_relation r).exact r :=
+  lift_exact _ _ _ (fun _ _ ↦ (weaken_last _ _ _ _).mpr)
+  (conditional_merge_rec₁_relaxes_weakened_exact _ _ _ _ (id_weaken_trivial_exact _ _))
 
-theorem of_relation_eqv_exact : (of_relation r).exact (EqvGen r) :=
-  eqv_exact_of_rel_exact _ _ (of_relation_rel_exact _)
+theorem of_relation_eqvGen_exact : (of_relation r).exact (EqvGen r) :=
+  eqvGen_exact_of_exact _ _ (of_relation_exact _)
 
-theorem of_relation_iff_eqv : ∀ i j : Fin n, (of_relation r).rel i j ↔ EqvGen r i j :=
-  fun i j ↦ ⟨of_relation_eqv_sound r i j, of_relation_eqv_exact r i j⟩
+theorem of_relation_iff_eqvGen : ∀ i j : Fin n, (of_relation r).mapEq i j ↔ EqvGen r i j :=
+  fun i j ↦ ⟨of_relation_eqvGen_sound r i j, of_relation_eqvGen_exact r i j⟩
+
+end
 
 end Partition
 

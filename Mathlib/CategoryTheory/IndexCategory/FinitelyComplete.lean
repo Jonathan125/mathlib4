@@ -25,7 +25,7 @@ variable {m n : 𝔽} (f g : m ⟶ n)
 
 def equalizer_fork : Fork f g := ofι (equal f g) (equal_condition f g)
 
-noncomputable def equalizer : IsLimit (equalizer_fork f g) :=
+def equalizer : IsLimit (equalizer_fork f g) :=
   Fork.IsLimit.mk _ (fun s ↦ lift s.condition)
     (fun s ↦ fac s.condition) (fun s _ ↦ uniq s.condition _)
 
