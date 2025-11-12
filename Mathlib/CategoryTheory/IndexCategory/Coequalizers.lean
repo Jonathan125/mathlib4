@@ -40,7 +40,8 @@ lemma coeq_condition_iff_eqv_exact {k : IndexCategory} (h : n ⟶ k) :
       apply he
       exact EqvGen.rel _ _ (Exists.intro i ⟨rfl, rfl⟩)
 
-def partition : Partition n.len := Partition.of_relation (relation f g)
+def partition : Partition n.len :=
+  Partition.of_relation (relation f g)
 
 @[inline]
 abbrev coeq_obj : IndexCategory := mk (partition f g).size.val
@@ -63,40 +64,41 @@ theorem coeq_condition : f ≫ coeq_hom f g = g ≫ coeq_hom f g := by
   exact of_relation_eqvGen_exact _ i j hr
 
 @[inline, simp]
-abbrev coeq_rinv_toFun : Fin (coeq_obj f g).len → Fin n.len :=
+abbrev rep_toFun : Fin (coeq_obj f g).len → Fin n.len :=
   (partition f g).rep ∘ Fin.cast (len_mk _)
 
-def coeq_rinv_hom : coeq_obj f g ⟶ n :=
-  Hom.mk (coeq_rinv_toFun f g)
+def rep_hom : coeq_obj f g ⟶ n :=
+  Hom.mk (rep_toFun f g)
 
 @[simp]
-lemma coeq_rinv_hom_toFun : (coeq_rinv_hom f g).toFun = coeq_rinv_toFun f g :=
+lemma rep_hom_toFun : (rep_hom f g).toFun = rep_toFun f g :=
   Hom.toFun_mk _
 
 @[reassoc (attr := simp)]
-theorem right_comp_id : coeq_rinv_hom f g ≫ coeq_hom f g = 𝟙 (coeq_obj f g) :=
+theorem rep_comp_coeq_id : rep_hom f g ≫ coeq_hom f g = 𝟙 (coeq_obj f g) :=
   by ext i ; simp [Function.comp, Fin.cast]
 
-lemma left_comp_mapEq (i : Fin n.len) :
-    (partition f g).mapEq ((coeq_hom f g ≫ coeq_rinv_hom f g).toFun i) i :=
+theorem coeq_comp_rep_mapEq (i : Fin n.len) :
+    (partition f g).mapEq ((coeq_hom f g ≫ rep_hom f g).toFun i) i :=
   by ext ; simp
 
 variable {k : IndexCategory} (h : n ⟶ k)
 
 def desc : coeq_obj f g ⟶ k :=
-  coeq_rinv_hom f g ≫ h
+  rep_hom f g ≫ h
 
-lemma fac (hh : f ≫ h = g ≫ h) : coeq_hom f g ≫ desc f g h = h := by
+theorem fac (hh : f ≫ h = g ≫ h) : coeq_hom f g ≫ desc f g h = h := by
   apply Hom.ext
   funext i
   rw [desc, <-Category.assoc, comp_toFun]
   dsimp
   apply (coeq_condition_iff_eqv_exact f g h).mp hh
   apply of_relation_eqvGen_sound
-  exact left_comp_mapEq _ _ i
+  exact coeq_comp_rep_mapEq _ _ i
 
-lemma uniq (s : coeq_obj f g ⟶ k) (hs : coeq_hom f g ≫ s = h) : s = desc f g h :=
-  (id_comp _).symm.trans <| ((right_comp_id _ _).symm =≫ _).trans <| (assoc _ _ _).trans (_ ≫= hs)
+theorem uniq (s : coeq_obj f g ⟶ k) (hs : coeq_hom f g ≫ s = h) : s = desc f g h :=
+  (id_comp _).symm.trans <| ((rep_comp_coeq_id _ _).symm =≫ _).trans <|
+    (assoc _ _ _).trans (_ ≫= hs)
 
 end Coequalizer
 

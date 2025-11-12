@@ -54,6 +54,20 @@ section
 
 variable {n : ℕ} (p : Partition n)
 
+@[ext]
+theorem ext (p' : Partition n) (h₁ : p.size.val = p'.size.val)
+    (h₂ : ∀ i : Fin n, (p.map i).val = (p'.map i).val) : p = p' := by
+  match p, p' with
+  | Partition.mk s₁ m₁ r₁ ri₁ min₁ _, Partition.mk s₂ m₂ r₂ ri₂ min₂ _ =>
+    obtain rfl : s₁ = s₂ := Fin.eq_of_val_eq h₁
+    obtain rfl : m₁ = m₂ := funext (fun i ↦ Fin.eq_of_val_eq (h₂ i))
+    obtain rfl : r₁ = r₂ := by
+      ext i
+      apply Nat.le_antisymm
+      · exact min₁ (r₂ i) i (congr_fun ri₂ i)
+      · exact min₂ (r₁ i) i (congr_fun ri₁ i)
+    rfl
+
 theorem size_ne_zero_of_fin (i : Fin n) : p.size ≠ 0 :=
   Fin.pos_iff_ne_zero.mp ((Nat.zero_le _).trans_lt (p.map i).isLt)
 
@@ -103,10 +117,9 @@ theorem splitOn_lt {α : Sort*} {h₁ : p.mapEq i j → α} {h₂ : p.mapLT i j 
     dite_cond_eq_true (eq_true_intro h)
 
 theorem splitOn_gt {α : Sort*} {h₁ : p.mapEq i j → α} {h₂ : p.mapLT i j → α} {h₃ : p.mapGT i j → α}
-    (h : p.mapGT i j) : p.splitOn i j h₁ h₂ h₃ = h₃ h
-  :=
-    (dite_cond_eq_false (eq_false_intro (Fin.ne_of_gt h))).trans <|
-      dite_cond_eq_false (eq_false_intro (Fin.not_lt.mpr (Fin.le_of_lt h)))
+    (h : p.mapGT i j) : p.splitOn i j h₁ h₂ h₃ = h₃ h :=
+  (dite_cond_eq_false (eq_false_intro (Fin.ne_of_gt h))).trans <|
+    dite_cond_eq_false (eq_false_intro (Fin.not_lt.mpr (Fin.le_of_lt h)))
 
 end
 
@@ -447,7 +460,7 @@ section
 
 variable {n : ℕ} (p : Partition n) (r : Fin n → Fin n → Prop)
 
-lemma merge_preserves_eqv_sound_of_rel (i j : Fin n) :
+lemma merge_preserves_eqvGen_sound_of_rel (i j : Fin n) :
     p.sound (EqvGen r) → r i j → (p.merge i j).sound (EqvGen r)
   := by
     intro hs hr i' j' hp
@@ -509,7 +522,7 @@ lemma conditional_merge_preserves_eqvGen_sound :
     intro hs
     if hr : r i j then
       rw [conditional_merge, ite_cond_eq_true _ _ (eq_true_intro hr)]
-      exact p.merge_preserves_eqv_sound_of_rel r i j hs hr
+      exact p.merge_preserves_eqvGen_sound_of_rel r i j hs hr
     else
       rw [conditional_merge, ite_cond_eq_false _ _ (eq_false_intro hr)]
       exact hs
@@ -545,7 +558,7 @@ def conditional_merge_rec₁ (i : ℕ) (h : i < n + 1) : Partition n :=
   | i + 1 => (conditional_merge_rec₁ i ((lt_succ_self _).trans h)).conditional_merge_rec₂
     r ⟨i, Nat.add_lt_add_iff_right.mp h⟩ n (lt_succ_self n)
 
-lemma conditional_merge_rec₂_preserves_eqv_sound (i : Fin n) (j : ℕ) (h : j < n + 1) :
+lemma conditional_merge_rec₂_preserves_eqvGen_sound (i : Fin n) (j : ℕ) (h : j < n + 1) :
     p.sound (EqvGen r) → (p.conditional_merge_rec₂ r i j h).sound (EqvGen r)
   := by
     intro hs
@@ -553,13 +566,13 @@ lemma conditional_merge_rec₂_preserves_eqv_sound (i : Fin n) (j : ℕ) (h : j 
     | zero => exact hs
     | succ j ih => apply conditional_merge_preserves_eqvGen_sound ; apply ih
 
-lemma conditional_merge_rec₁_preserves_eqv_sound (i : ℕ) (h : i < n + 1) :
+lemma conditional_merge_rec₁_preserves_eqvGen_sound (i : ℕ) (h : i < n + 1) :
     p.sound (EqvGen r) → (p.conditional_merge_rec₁ r i h).sound (EqvGen r)
   := by
     intro hs
     induction i with
     | zero => exact hs
-    | succ i ih => apply conditional_merge_rec₂_preserves_eqv_sound ; apply ih
+    | succ i ih => apply conditional_merge_rec₂_preserves_eqvGen_sound ; apply ih
 
 lemma conditional_merge_rec₂_relaxes_weakened_exact (i : Fin n) (j : ℕ) (h : j < n + 1) :
     p.exact (weaken_rel r i.castSucc 0) →
@@ -590,7 +603,7 @@ variable (r : Fin n → Fin n → Prop) [∀ i j : Fin n, Decidable (r i j)]
 def of_relation : Partition n := (id n).conditional_merge_rec₁ r n (lt_succ_self n)
 
 theorem of_relation_eqvGen_sound : (of_relation r).sound (EqvGen r) :=
-  conditional_merge_rec₁_preserves_eqv_sound _ _ _ _ (id_eqvGen_sound _ _)
+  conditional_merge_rec₁_preserves_eqvGen_sound _ _ _ _ (id_eqvGen_sound _ _)
 
 theorem of_relation_exact : (of_relation r).exact r :=
   lift_exact _ _ _ (fun _ _ ↦ (weaken_last _ _ _ _).mpr)
