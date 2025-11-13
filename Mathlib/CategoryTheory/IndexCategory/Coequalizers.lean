@@ -7,97 +7,93 @@ namespace CategoryTheory
 
 namespace IndexCategory
 
-section Coequalizer
+namespace Coequalizer
 
 open Category Nat Fin Partition Relation
 
 variable {m n : IndexCategory} (f g : m ⟶ n)
 
 @[reducible]
-def relation (i j : Fin n.len) : Prop := ∃ k : Fin m.len, f.toFun k = i ∧ g.toFun k = j
+protected def relation (i j : Fin n.len) : Prop :=
+  ∃ k : Fin m.len, f.toFun k = i ∧ g.toFun k = j
 
-def equivalence : Fin n.len → Fin n.len → Prop := EqvGen (relation f g)
+protected def equivalence : Fin n.len → Fin n.len → Prop :=
+  EqvGen (Coequalizer.relation f g)
 
-lemma coeq_condition_iff_eqvGen_exact {k : IndexCategory} (h : n ⟶ k) :
-    f ≫ h = g ≫ h ↔ ∀ (i j : Fin n.len), equivalence f g i j → h.toFun i = h.toFun j
-  := by
-    constructor
-    · intro he i j hr
-      induction hr with
-      | rel i j hr =>
-        apply Exists.elim hr
-        intro u ⟨h₁, h₂⟩
-        replace he := congr_fun (congr_arg Hom.toFun he) u
-        simp at he
-        exact (congr_arg h.toFun h₁.symm).trans (he.trans (congr_arg h.toFun h₂))
-      | refl i => exact Eq.refl _
-      | symm i j h₁ ih => exact ih.symm
-      | trans i j k h₁ h₂ ih₁ ih₂ => exact ih₁.trans ih₂
-    · intro he
-      apply Hom.ext
-      funext i
-      simp
-      apply he
-      exact EqvGen.rel _ _ (Exists.intro i ⟨rfl, rfl⟩)
+protected theorem condition_iff_equivalence_exact {k : IndexCategory} (h : n ⟶ k) :
+    f ≫ h = g ≫ h ↔
+    ∀ (i j : Fin n.len), Coequalizer.equivalence f g i j → h.toFun i = h.toFun j := by
+  constructor
+  · intro he i j hr
+    induction hr with
+    | rel i j hr =>
+      apply Exists.elim hr
+      intro u ⟨h₁, h₂⟩
+      replace he := congr_fun (congr_arg Hom.toFun he) u
+      simp at he
+      exact (congr_arg h.toFun h₁.symm).trans (he.trans (congr_arg h.toFun h₂))
+    | refl i => exact Eq.refl _
+    | symm i j h₁ ih => exact ih.symm
+    | trans i j k h₁ h₂ ih₁ ih₂ => exact ih₁.trans ih₂
+  · intro he
+    apply Hom.ext
+    funext i
+    simp
+    apply he
+    exact EqvGen.rel _ _ (Exists.intro i ⟨rfl, rfl⟩)
 
-def partition : Partition n.len :=
-  Partition.of_relation (relation f g)
+protected def partition : Partition n.len :=
+  Partition.of_relation (Coequalizer.relation f g)
 
-@[inline]
-abbrev coeq_obj : IndexCategory := mk (partition f g).size.val
+protected def obj : IndexCategory :=
+  mk (Coequalizer.partition f g).size.val
 
-@[inline, simp]
-abbrev coeq_toFun : Fin n.len → Fin (coeq_obj f g).len :=
-  Fin.cast (len_mk _).symm ∘ (partition f g).map
-
-def coeq_hom : n ⟶ coeq_obj f g :=
-  Hom.mk (coeq_toFun f g)
+protected def hom : n ⟶ Coequalizer.obj f g :=
+  Hom.mk <| Fin.cast (len_mk _).symm ∘ (Coequalizer.partition f g).map
 
 @[simp]
-lemma coeq_hom_toFun : (coeq_hom f g).toFun = coeq_toFun f g :=
-  Hom.toFun_mk _
+protected theorem coeq_toFun_apply (i : Fin n.len) :
+    (Coequalizer.hom f g).toFun i = Fin.cast (len_mk _).symm ((Coequalizer.partition f g).map i) :=
+  Hom.toFun_mk_apply _ _
 
-theorem coeq_condition : f ≫ coeq_hom f g = g ≫ coeq_hom f g := by
-  apply (coeq_condition_iff_eqvGen_exact f g _).mpr
+protected theorem condition : f ≫ Coequalizer.hom f g = g ≫ Coequalizer.hom f g := by
+  apply (Coequalizer.condition_iff_equivalence_exact f g _).mpr
   intro i j hr
-  simp
-  exact of_relation_eqvGen_exact _ i j hr
+  simp only [Coequalizer.coeq_toFun_apply]
+  exact congr_arg _ (of_relation_eqvGen_exact (Coequalizer.relation f g) i j hr)
 
-@[inline, simp]
-abbrev rep_toFun : Fin (coeq_obj f g).len → Fin n.len :=
-  (partition f g).rep ∘ Fin.cast (len_mk _)
-
-def rep_hom : coeq_obj f g ⟶ n :=
-  Hom.mk (rep_toFun f g)
+protected def rep : Coequalizer.obj f g ⟶ n :=
+  Hom.mk <| (Coequalizer.partition f g).rep ∘ Fin.cast (len_mk _)
 
 @[simp]
-lemma rep_hom_toFun : (rep_hom f g).toFun = rep_toFun f g :=
-  Hom.toFun_mk _
+protected theorem rep_toFun_apply (i : Fin (Coequalizer.obj f g).len) :
+    (Coequalizer.rep f g).toFun i = (Coequalizer.partition f g).rep (Fin.cast (len_mk _) i) :=
+  Hom.toFun_mk_apply _ _
 
 @[reassoc (attr := simp)]
-theorem rep_comp_coeq_id : rep_hom f g ≫ coeq_hom f g = 𝟙 (coeq_obj f g) :=
-  by ext i ; simp [Function.comp, Fin.cast]
+protected theorem rep_comp_coeq_id :
+    Coequalizer.rep f g ≫ Coequalizer.hom f g = 𝟙 (Coequalizer.obj f g) :=
+  by ext i ; simp [-len_mk]
 
-theorem coeq_comp_rep_mapEq (i : Fin n.len) :
-    (partition f g).mapEq ((coeq_hom f g ≫ rep_hom f g).toFun i) i :=
-  by ext ; simp
+protected theorem coeq_comp_rep_mapEq (i : Fin n.len) :
+    (Coequalizer.partition f g).mapEq ((Coequalizer.hom f g ≫ Coequalizer.rep f g).toFun i) i :=
+  by ext ; simp [-len_mk]
 
 variable {k : IndexCategory} (h : n ⟶ k)
 
-def desc : coeq_obj f g ⟶ k :=
-  rep_hom f g ≫ h
+protected def desc : Coequalizer.obj f g ⟶ k :=
+  Coequalizer.rep f g ≫ h
 
-theorem fac (hh : f ≫ h = g ≫ h) : coeq_hom f g ≫ desc f g h = h := by
-  apply Hom.ext
-  funext i
-  rw [desc, <-Category.assoc, comp_toFun]
+protected theorem fac (hh : f ≫ h = g ≫ h) : Coequalizer.hom f g ≫ Coequalizer.desc f g h = h := by
+  ext i : 2
+  rw [Coequalizer.desc, <-Category.assoc, comp_toFun]
   dsimp
-  apply (coeq_condition_iff_eqvGen_exact f g h).mp hh
-  apply of_relation_eqvGen_sound
-  exact coeq_comp_rep_mapEq _ _ i
+  apply (Coequalizer.condition_iff_equivalence_exact f g h).mp hh
+  exact of_relation_eqvGen_sound _ _ _ (Coequalizer.coeq_comp_rep_mapEq _ _ i)
 
-theorem uniq (s : coeq_obj f g ⟶ k) (hs : coeq_hom f g ≫ s = h) : s = desc f g h :=
-  (id_comp _).symm.trans <| ((rep_comp_coeq_id _ _).symm =≫ _).trans <|
+protected theorem uniq (s : Coequalizer.obj f g ⟶ k) (hs : Coequalizer.hom f g ≫ s = h) :
+    s = Coequalizer.desc f g h :=
+  (id_comp _).symm.trans <| ((Coequalizer.rep_comp_coeq_id _ _).symm =≫ _).trans <|
     (assoc _ _ _).trans (_ ≫= hs)
 
 end Coequalizer

@@ -31,7 +31,7 @@ theorem mk_len (n : IndexCategory) : mk n.len = n :=
   rfl
 
 protected def rec {F : IndexCategory → Sort*} (h : ∀ n : ℕ, F (mk n)) : ∀ n, F n :=
-  fun n ↦ h n.len
+  (h <| len ·)
 
 attribute [irreducible] IndexCategory.mk
 attribute [irreducible] IndexCategory.len
@@ -41,7 +41,7 @@ protected def recOn (n : IndexCategory) {F : IndexCategory → Sort*} (h : ∀ n
 
 protected theorem rec_heq {F : IndexCategory → Sort*} (h : ∀ n : ℕ, F (mk n)) :
     ∀ n, IndexCategory.rec h n ≍ h n.len :=
-  IndexCategory.rec (fun n ↦ by simp [IndexCategory.rec])
+  IndexCategory.rec <| fun n ↦ by simp [IndexCategory.rec]
 
 protected theorem recOn_heq (n : IndexCategory) {F : IndexCategory → Sort*}
     (h : ∀ n : ℕ, F (mk n)) : IndexCategory.recOn n h ≍ h n.len :=
@@ -51,7 +51,8 @@ instance sizeOf : SizeOf IndexCategory where
   sizeOf n := n.len
 
 @[simp]
-protected theorem sizeOf_eq_len (n : IndexCategory) : SizeOf.sizeOf n = n.len := rfl
+protected theorem sizeOf_eq_len (n : IndexCategory) : SizeOf.sizeOf n = n.len :=
+  rfl
 
 protected def add (m n : IndexCategory) : IndexCategory :=
   mk <| m.len + n.len
@@ -93,25 +94,17 @@ theorem mul_len {m n : IndexCategory} : (m * n).len = m.len * n.len :=
 theorem pow_len {m n : IndexCategory} : (m ^ n).len = m.len ^ n.len :=
   len_mk _
 
-protected theorem add_comm (m n : IndexCategory) : m + n = n + m := by
-  ext
-  simp [Nat.add_comm]
+protected theorem add_comm (m n : IndexCategory) : m + n = n + m :=
+  ext _ _ <| by simp [Nat.add_comm]
 
-protected theorem add_assoc (m n k : IndexCategory) : m + n + k = m + (n + k) := by
-  ext
-  simp [Nat.add_assoc]
+protected theorem add_assoc (m n k : IndexCategory) : m + n + k = m + (n + k) :=
+  ext _ _ <| by simp [Nat.add_assoc]
 
-theorem left_add_injective (m : IndexCategory) : Function.Injective (m + ·) := by
-  intro n k h
-  replace h := IndexCategory.ext_iff.mp h
-  simp at h
-  exact ext _ _ h
+theorem left_add_injective (m : IndexCategory) : Function.Injective (m + ·) :=
+  fun _ _ h ↦ ext _ _ <| by simpa using IndexCategory.ext_iff.mp h
 
-theorem right_add_injective (m : IndexCategory) : Function.Injective (· + m) := by
-  intro n k h
-  replace h := IndexCategory.ext_iff.mp h
-  simp at h
-  exact ext _ _ h
+theorem right_add_injective (m : IndexCategory) : Function.Injective (· + m) :=
+  fun _ _ h ↦ ext _ _ <| by simpa using IndexCategory.ext_iff.mp h
 
 def zero : IndexCategory :=
   mk 0
@@ -123,26 +116,27 @@ def one : IndexCategory :=
 theorem zero_len : zero.len = 0 :=
   len_mk _
 
-protected lemma zero_eq_mk : zero = mk 0 :=
+protected theorem zero_eq_mk : zero = mk 0 :=
   rfl
 
-protected lemma zero_add {n : IndexCategory} : zero + n = n :=
+protected theorem zero_add {n : IndexCategory} : zero + n = n :=
   ext _ _ <| add_len.trans <| zero_len ▸ Nat.zero_add _
 
-protected lemma add_zero {n : IndexCategory} : n + zero = n :=
+protected theorem add_zero {n : IndexCategory} : n + zero = n :=
   ext _ _ <| add_len.trans <| zero_len ▸ Nat.add_zero _
 
 @[simp]
 theorem one_len : one.len = 1 :=
   len_mk _
 
-lemma one_eq_mk : one = mk 1 :=
+theorem one_eq_mk : one = mk 1 :=
   rfl
 
-lemma mk_succ {n : ℕ} : mk n + one = mk (n + 1) :=
-  ext _ _ <| add_len.trans <| (congr_arg₂ _ (len_mk _) (len_mk _)).trans <| (len_mk _).symm
+theorem mk_succ {n : ℕ} : mk n + one = mk (n + 1) :=
+  ext _ _ <| add_len.trans <| (congr_arg₂ _ (len_mk _) one_len).trans (len_mk _).symm
 
-lemma succ_len {n : IndexCategory} : (n + one).len = n.len + 1 := by simp
+theorem succ_len {n : IndexCategory} : (n + one).len = n.len + 1 :=
+  add_len.trans <| congr_arg₂ _ rfl one_len
 
 @[cases_eliminator]
 protected def cases {F : IndexCategory → Sort*} (zero : F zero) (succ : ∀ n, F (n + one)) :
@@ -151,9 +145,8 @@ protected def cases {F : IndexCategory → Sort*} (zero : F zero) (succ : ∀ n,
 
 @[simp]
 protected theorem cases_zero {F : IndexCategory → Sort*} (zero : F zero) (succ : ∀ n, F (n + one)) :
-    IndexCategory.cases zero succ IndexCategory.zero = zero
-  :=
-    heq_iff_eq.mp <| (IndexCategory.rec_heq _ _).trans <| by rw [zero_len]
+    IndexCategory.cases zero succ IndexCategory.zero = zero :=
+  heq_iff_eq.mp <| (IndexCategory.rec_heq _ _).trans <| by rw [zero_len]
 
 @[simp]
 protected theorem cases_succ {F : IndexCategory → Sort*} (zero : F zero) (succ : ∀ n, F (n + one))
@@ -239,6 +232,7 @@ protected def strong_induction {F : IndexCategory → Sort*} (zero : F zero)
     simp
     exact Nat.lt_succ_of_le hm
 
+
 protected def Hom (m n : IndexCategory) : Type :=
   Fin m.len → Fin n.len
 
@@ -261,15 +255,15 @@ theorem mk_toFun {m n : IndexCategory} (f : IndexCategory.Hom m n) : mk f.toFun 
   rfl
 
 @[simp]
-theorem toFun_mk {m n : IndexCategory} (f : Fin m.len → Fin n.len) : Hom.toFun (mk f) = f :=
+theorem toFun_mk {m n : IndexCategory} (f : Fin m.len → Fin n.len) : (mk f).toFun = f :=
   rfl
 
 attribute [irreducible] IndexCategory.Hom.mk
 attribute [irreducible] IndexCategory.Hom.toFun
 
 @[simp]
-theorem toFun_mk_apply {m n : IndexCategory} (f : Fin m.len → Fin n.len)
-    (i : Fin m.len) : (mk f).toFun i = f i :=
+theorem toFun_mk_apply {m n : IndexCategory} (f : Fin m.len → Fin n.len) (i : Fin m.len) :
+    (mk f).toFun i = f i :=
   congr_fun (toFun_mk f) i
 
 @[simp]
@@ -279,7 +273,7 @@ def id (n : IndexCategory) : IndexCategory.Hom n n :=
 @[simp]
 def comp {m n k : IndexCategory} (f : IndexCategory.Hom m n) (g : IndexCategory.Hom n k) :
     IndexCategory.Hom m k :=
-  mk (g.toFun ∘ f.toFun)
+  mk <| g.toFun ∘ f.toFun
 
 end Hom
 
@@ -294,7 +288,7 @@ theorem id_toFun (n : IndexCategory) : Hom.toFun (𝟙 n) = (·) :=
 
 @[simp]
 theorem comp_toFun {m n k : IndexCategory} (f : m ⟶ n) (g : n ⟶ k) :
-    Hom.toFun (f ≫ g) = g.toFun ∘ f.toFun :=
+    (f ≫ g).toFun = g.toFun ∘ f.toFun :=
   Hom.toFun_mk _
 
 @[ext]
@@ -302,14 +296,12 @@ theorem Hom.ext {m n : IndexCategory} (f g : m ⟶ n) : f.toFun = g.toFun → f 
   Hom.ext' _ _
 
 theorem congr_toFun_apply {m n : IndexCategory} (f : m ⟶ n) (i j : Fin m.len) :
-    i.val = j.val → f.toFun i = f.toFun j
-  :=
-    fun h ↦ congr_arg _ (Fin.eq_of_val_eq h)
+    i.val = j.val → f.toFun i = f.toFun j :=
+  fun h ↦ congr_arg _ (Fin.eq_of_val_eq h)
 
 theorem congr_toFun_apply_val {m n : IndexCategory} (f : m ⟶ n) (i j : Fin m.len) :
-    i.val = j.val → (f.toFun i).val = (f.toFun j).val
-  :=
-    fun h ↦ congr_arg _ (congr_toFun_apply _ _ _ h)
+    i.val = j.val → (f.toFun i).val = (f.toFun j).val :=
+  fun h ↦ congr_arg _ (congr_toFun_apply _ _ _ h)
 
 def fin_succ_first (n : IndexCategory) : Fin (n + one).len :=
   ⟨0, by simp⟩
@@ -332,9 +324,9 @@ theorem fin_succ_last_val {n : IndexCategory} : n.fin_succ_last.val = n.len :=
 theorem fin_one_val : fin_one.val = 0 :=
   rfl
 
-lemma eq_last_of_not_lt {n : IndexCategory} {i : Fin (n + one).len} (h : ¬ i.val < n.len) :
-    i = fin_succ_last n := Fin.eq_of_val_eq
-  (by simp ; exact Fin.val_eq_of_eq (@Fin.eq_last_of_not_lt _ (Fin.cast succ_len i) h))
+theorem eq_last_of_not_lt {n : IndexCategory} {i : Fin (n + one).len} (h : ¬ i.val < n.len) :
+    i = fin_succ_last n :=
+  Fin.eq_of_val_eq <| Nat.eq_of_lt_succ_of_not_lt (i.isLt.trans_eq succ_len) h
 
 def elim_zero (i : Fin zero.len) {α : Sort*} : α :=
   Fin.elim0 <| Fin.cast (len_mk 0) i
@@ -343,7 +335,7 @@ theorem fin_one_ext (i j : Fin one.len) : i = j :=
   (congr_arg Fin one_len.symm ▸ Fin.subsingleton_one).elim i j
 
 def zero_to (n : IndexCategory) : zero ⟶ n :=
-  Hom.mk (fun i ↦ elim_zero i)
+  Hom.mk <| fun i ↦ elim_zero i
 
 theorem zero_to_ext {n : IndexCategory} (f g : zero ⟶ n) : f = g :=
   Hom.ext _ _ <| funext fun i ↦ elim_zero i
@@ -354,6 +346,9 @@ theorem eq_zero_to_ext {m n : IndexCategory} (h : m = zero) (f g : m ⟶ n) : f 
 def elim_succ_to_zero {n : IndexCategory} (f : n + one ⟶ zero) {α : Sort*} : α :=
   elim_zero <| f.toFun <| fin_succ_first _
 
+theorem zero_to_zero_id : zero_to zero = 𝟙 zero :=
+  zero_to_ext _ _
+
 theorem eq_zero_of_to_zero {n : IndexCategory} (f : n ⟶ zero) : n = zero := by
   cases n with
   | zero => rfl
@@ -363,24 +358,32 @@ theorem eq_zero_of_to_mk_zero {n : IndexCategory} (f : n ⟶ mk 0) : n = zero :=
   eq_zero_of_to_zero <| IndexCategory.zero_eq_mk ▸ f
 
 def const (m n : IndexCategory) (i : Fin n.len) : m ⟶ n :=
-  Hom.mk (Function.const _ i)
+  Hom.mk <| Function.const _ i
 
 @[simp]
-lemma const_toFun (m n : IndexCategory) (i : Fin n.len) :
-    Hom.toFun (const m n i) = Function.const _ i :=
+theorem const_toFun (m n : IndexCategory) (i : Fin n.len) :
+    (const m n i).toFun = Function.const _ i :=
   Hom.toFun_mk _
 
 @[reassoc (attr := simp)]
-lemma comp_const {m n k : IndexCategory} (f : m ⟶ n) (i : Fin k.len) :
+theorem comp_const {m n k : IndexCategory} (f : m ⟶ n) (i : Fin k.len) :
     f ≫ const n k i = const m k i :=
-  Hom.ext _ _ (funext fun _ ↦ by simp)
+  by ext _ ; simp
+
+@[reassoc]
+theorem const_comp {m n k : IndexCategory} (i : Fin n.len) (f : n ⟶ k) :
+    const m n i ≫ f = const m k (f.toFun i) :=
+  by ext _ ; simp
 
 @[inline]
 abbrev to_one (n : IndexCategory) : n ⟶ one :=
   const n one fin_one
 
-lemma to_one_ext {n : IndexCategory} (f g : n ⟶ one) : f = g :=
+theorem to_one_ext {n : IndexCategory} (f g : n ⟶ one) : f = g :=
   Hom.ext _ _ (funext fun _ ↦ fin_one_ext _ _)
+
+theorem to_one_one_id : to_one one = 𝟙 one :=
+  to_one_ext _ _
 
 @[inline]
 abbrev one_to {n : IndexCategory} (i : Fin n.len) : one ⟶ n :=
@@ -393,19 +396,20 @@ theorem one_to_ext {n : IndexCategory} (f g : one ⟶ n) :
   obtain rfl : i = fin_one := fin_one_ext _ _
   exact h
 
+theorem one_to_fin_one_id : one_to fin_one = 𝟙 one :=
+  to_one_ext _ _
+
 @[reassoc]
 theorem one_to_comp {m n : IndexCategory} (i : Fin m.len) (f : m ⟶ n) :
-    one_to i ≫ f = one_to (f.toFun i)
-  := by
-    apply one_to_ext
-    simp
+    one_to i ≫ f = one_to (f.toFun i) :=
+  one_to_ext _ _ <| by simp
 
 def eqHom {m n : IndexCategory} (h : m = n) : m ⟶ n :=
-  Hom.mk (Fin.cast (congr_arg _ h))
+  Hom.mk <| Fin.cast (congr_arg _ h)
 
 @[simp]
 theorem eqHom_toFun {m n : IndexCategory} (h : m = n) :
-    Hom.toFun (eqHom h) = Fin.cast (congr_arg _ h) :=
+    (eqHom h).toFun = Fin.cast (congr_arg _ h) :=
   Hom.toFun_mk _
 
 @[simp]
@@ -418,32 +422,20 @@ theorem eqHom_trans {m n k : IndexCategory} (h₁ : m = n) (h₂ : n = k) :
   Hom.ext _ _ (funext fun _ ↦ by simp)
 
 theorem comp_eqHom_iff {m n k : IndexCategory} (f : m ⟶ n) (g : m ⟶ k) (h : n = k) :
-    f ≫ eqHom h = g ↔ f = g ≫ eqHom h.symm
-  := by
-    obtain rfl : n = k := h
-    simp
+    f ≫ eqHom h = g ↔ f = g ≫ eqHom h.symm :=
+  by subst h ; simp
 
 theorem eqHom_comp_iff {m n k : IndexCategory} (f : n ⟶ k) (g : m ⟶ k) (h : m = n) :
-    eqHom h ≫ f = g ↔ f = eqHom h.symm ≫ g
-  := by
-    obtain rfl : m = n := h
-    simp
+    eqHom h ≫ f = g ↔ f = eqHom h.symm ≫ g :=
+  by subst h ; simp
 
 theorem eq_of_eqHom_comp_eq {m n k : IndexCategory} (h : m = n) (f g : n ⟶ k) :
-    eqHom h ≫ f = eqHom h ≫ g → f = g
-  := by
-    intro h'
-    replace h' := (eqHom_comp_iff _ _ _).mp h'
-    simp at h'
-    exact h'
+    eqHom h ≫ f = eqHom h ≫ g → f = g :=
+  fun h' ↦ by simpa using (eqHom_comp_iff _ _ _).mp h'
 
 theorem eq_of_comp_eqHom_eq {m n k : IndexCategory} (h : n = k) (f g : m ⟶ n) :
-    f ≫ eqHom h = g ≫ eqHom h → f = g
-  := by
-    intro h'
-    replace h' := (comp_eqHom_iff _ _ _).mp h'
-    simp at h'
-    exact h'
+    f ≫ eqHom h = g ≫ eqHom h → f = g :=
+  fun h' ↦ by simpa using (comp_eqHom_iff _ _ _).mp h'
 
 def eqIso {m n : IndexCategory} (h : m = n) : m ≅ n where
   hom := eqHom h
@@ -457,57 +449,45 @@ def assocIso {m n k : IndexCategory} : m + n + k ≅ m + (n + k) :=
 
 @[simp]
 theorem eqIso_hom_toFun {m n : IndexCategory} (h : m = n) :
-    Hom.toFun (eqIso h).hom = Fin.cast (congr_arg _ h)
-  :=
-    eqHom_toFun h
+    (eqIso h).hom.toFun = Fin.cast (congr_arg _ h) :=
+  eqHom_toFun h
 
 @[simp]
 theorem eqIso_inv_toFun {m n : IndexCategory} (h : m = n) :
-    Hom.toFun (eqIso h).inv = Fin.cast (congr_arg _ h.symm)
-  :=
-    eqHom_toFun h.symm
+    (eqIso h).inv.toFun = Fin.cast (congr_arg _ h.symm) :=
+  eqHom_toFun h.symm
 
 @[simp]
 theorem commIso_hom_toFun {m n : IndexCategory} :
-    Hom.toFun commIso.hom = Fin.cast (congr_arg _ (IndexCategory.add_comm m n))
-  :=
-    eqHom_toFun (IndexCategory.add_comm m n)
+    commIso.hom.toFun = Fin.cast (congr_arg _ (IndexCategory.add_comm m n)) :=
+  eqHom_toFun (IndexCategory.add_comm m n)
 
 @[simp]
 theorem commIso_inv_toFun {m n : IndexCategory} :
-    Hom.toFun commIso.inv = Fin.cast (congr_arg _ (IndexCategory.add_comm n m))
-  :=
-    eqHom_toFun (IndexCategory.add_comm n m)
+    commIso.inv.toFun = Fin.cast (congr_arg _ (IndexCategory.add_comm n m)) :=
+  eqHom_toFun (IndexCategory.add_comm n m)
 
 @[simp]
 theorem assocIso_hom_toFun {m n k : IndexCategory} :
-    Hom.toFun assocIso.hom = Fin.cast (congr_arg _ (IndexCategory.add_assoc m n k))
-  :=
-    eqHom_toFun (IndexCategory.add_assoc m n k)
+    assocIso.hom.toFun = Fin.cast (congr_arg _ (IndexCategory.add_assoc m n k)) :=
+  eqHom_toFun (IndexCategory.add_assoc m n k)
 
 @[simp]
 theorem assocIso_inv_toFun {m n k : IndexCategory} :
-    Hom.toFun assocIso.inv = Fin.cast (congr_arg _ (IndexCategory.add_assoc m n k).symm)
-  :=
-    eqHom_toFun (IndexCategory.add_assoc m n k).symm
+    assocIso.inv.toFun = Fin.cast (congr_arg _ (IndexCategory.add_assoc m n k).symm) :=
+  eqHom_toFun (IndexCategory.add_assoc m n k).symm
 
 theorem iso_hom_toFun_injective {m n : IndexCategory} (h : m ≅ n) :
     Function.Injective h.hom.toFun := by
   apply @Function.LeftInverse.injective _ _ h.inv.toFun _
   intro i
-  have inv := congr_fun (congr_arg Hom.toFun h.hom_inv_id) i
-  rw [comp_toFun] at inv
-  simp at inv
-  exact inv
+  simpa [-Iso.hom_inv_id] using (congr_fun (congr_arg Hom.toFun h.hom_inv_id) i)
 
 theorem iso_hom_toFun_surjective {m n : IndexCategory} (h : m ≅ n) :
     Function.Surjective h.hom.toFun := by
   apply @Function.RightInverse.surjective _ _ _ h.inv.toFun
   intro i
-  have inv := congr_fun (congr_arg Hom.toFun h.inv_hom_id) i
-  rw [comp_toFun] at inv
-  simp at inv
-  exact inv
+  simpa [-Iso.inv_hom_id] using (congr_fun (congr_arg Hom.toFun h.inv_hom_id) i)
 
 theorem iso_hom_toFun_bijective {m n : IndexCategory} (h : m ≅ n) :
   Function.Bijective h.hom.toFun := ⟨iso_hom_toFun_injective h, iso_hom_toFun_surjective h⟩

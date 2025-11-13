@@ -16,14 +16,16 @@ def initial : IsInitial zero where
   desc s := zero_to s.pt
   uniq _ _ _ := zero_to_ext _ _
 
-instance hasInitial : HasInitial IndexCategory := initial.hasInitial
+instance hasInitial : HasInitial IndexCategory :=
+  initial.hasInitial
 
 end Initial
 
 
 section BinaryCoproducts
 
-def binary_cofan (m n : IndexCategory) : BinaryCofan m n := BinaryCofan.mk ι₁ ι₂
+def binary_cofan (m n : IndexCategory) : BinaryCofan m n :=
+  BinaryCofan.mk ι₁ ι₂
 
 def binary_coproduct {m n : IndexCategory} : IsColimit (binary_cofan m n) :=
   BinaryCofan.isColimitMk (fun s ↦ [s.inl, s.inr])
@@ -67,10 +69,12 @@ section Coequalizers
 
 variable {m n : IndexCategory} (f g : m ⟶ n)
 
-def coequalizer_cofork : Cofork f g := Cofork.ofπ (coeq_hom f g) (coeq_condition f g)
+def coequalizer_cofork : Cofork f g :=
+  Cofork.ofπ (Coequalizer.hom f g) (Coequalizer.condition f g)
 
 def coequalizer : IsColimit (coequalizer_cofork f g) :=
-  Cofork.IsColimit.mk _ (fun s ↦ desc f g s.π) (fun s ↦ fac _ _ _ s.condition) (fun _ ↦ uniq _ _ _)
+  Cofork.IsColimit.mk _ (fun s ↦ Coequalizer.desc f g s.π)
+    (fun s ↦ Coequalizer.fac _ _ _ s.condition) (fun _ ↦ Coequalizer.uniq _ _ _)
 
 instance hasColimitParallelPair : HasColimit (parallelPair f g) :=
   HasColimit.mk ⟨_, coequalizer f g⟩
