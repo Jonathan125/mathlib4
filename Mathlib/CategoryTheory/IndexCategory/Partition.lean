@@ -75,6 +75,12 @@ theorem size_ne_zero_of_fin (i : Fin n) : p.size ≠ 0 :=
 theorem map_rep_id (i : Fin p.size.val) : p.map (p.rep i) = i :=
   congr_fun p.rinv i
 
+theorem map_surj : Function.Surjective p.map :=
+  Function.RightInverse.surjective p.map_rep_id
+
+theorem rep_inj : Function.Injective p.rep :=
+  Function.LeftInverse.injective p.map_rep_id
+
 variable (i j : Fin n)
 
 @[inline]
@@ -88,18 +94,6 @@ abbrev mapLT : Prop :=
 @[inline]
 abbrev mapGT : Prop :=
   p.map j < p.map i
-
-theorem mapGT_symm : p.mapLT i j → p.mapGT j i :=
-  id
-
-theorem mapLT_symm : p.mapGT i j → p.mapLT j i :=
-  id
-
-theorem zero_lt_map_of_lt (h : p.mapLT i j) : 0 < (p.map j).val :=
-  (Nat.zero_le _).trans_lt h
-
-theorem zero_lt_map_of_gt (h : p.mapGT i j) : 0 < (p.map i).val :=
-  (Nat.zero_le _).trans_lt h
 
 protected def splitOn {α : Sort*} : (p.mapEq i j → α) → (p.mapLT i j → α) → (p.mapGT i j → α) → α :=
   fun h₁ h₂ h₃ ↦
@@ -180,22 +174,21 @@ end
 
 section
 
-variable {n : ℕ} (p : Partition n) {l u : Fin n}
+variable {n : ℕ} (p : Partition n)
 
-def mergeLT_size (_ : p.mapLT l u) : Fin (n + 1) :=
-  (p.size.pred (p.size_ne_zero_of_fin l)).castSucc
+def mergeLT_size : Fin (n + 1) :=
+  ⟨p.size.val - 1, (Nat.pred_le _).trans_lt p.size.isLt⟩
 
-def mergeLT_fin_of_lt (i : Fin n) {j : Fin n} (h : p.mapLT i j) : Fin (p.mergeLT_size h) :=
+def mergeLT_fin_of_lt (i : Fin n) {j : Fin n} (h : p.mapLT i j) : Fin p.mergeLT_size.val :=
   ⟨(p.map i).val, h.trans_le (Nat.le_pred_of_lt (p.map j).isLt)⟩
 
-def mergeLT_fin_of_gt (i : Fin n) {j : Fin n} (h : p.mapGT i j) : Fin (p.mergeLT_size h) :=
+def mergeLT_fin_of_gt (i : Fin n) {j : Fin n} (h : p.mapGT i j) : Fin p.mergeLT_size.val :=
   ⟨(p.map i).val - 1, Nat.pred_lt_pred (Nat.ne_zero_of_lt h) (p.map i).isLt⟩
 
-def mergeLT_map (h : p.mapLT l u) (i : Fin n) : Fin (p.mergeLT_size h).val :=
-  p.splitOn i u
-    (fun _ ↦ p.mergeLT_fin_of_lt l h)
-    (fun h ↦ p.mergeLT_fin_of_lt i h)
-    (fun h ↦ p.mergeLT_fin_of_gt i h)
+variable {l u : Fin n}
+
+def mergeLT_map (h : p.mapLT l u) (i : Fin n) : Fin p.mergeLT_size.val :=
+  p.splitOn i u (fun _ ↦ p.mergeLT_fin_of_lt l h) (p.mergeLT_fin_of_lt i) (p.mergeLT_fin_of_gt i)
 
 @[simp]
 lemma mergeLT_fin_of_lt_val (i : Fin n) {j : Fin n} (h : p.mapLT i j) :
@@ -340,7 +333,7 @@ theorem mergeLT_map_eq_iff (h : p.mapLT l u) (i j : Fin n) :
       rw [p.mergeLT_map_of_gt _ _ h₆] at h₂
       exact Fin.eq_of_val_eq (Nat.pred_inj (Nat.zero_lt_of_lt h₁) (Nat.zero_lt_of_lt h₆) h₂)
 
-def mergeLT_rep (h : p.mapLT l u) (i : Fin (p.mergeLT_size h).val) : Fin n :=
+def mergeLT_rep (_ : p.mapLT l u) (i : Fin p.mergeLT_size.val) : Fin n :=
   if i.val < (p.map u).val
   then p.rep (Fin.castLE (Nat.pred_le _) i)
   else p.rep ⟨i.val + 1, Nat.succ_lt_of_lt_pred i.isLt⟩
@@ -359,7 +352,7 @@ theorem mergeLT_rinv (h : p.mapLT l u) :
       by simp ; exact Nat.lt_succ_of_le (Nat.le_of_not_lt h₁)
     simp [p.mergeLT_map_of_gt _ _ h₂]
 
-theorem mergeLT_min (h : p.mapLT l u) (i : Fin n) (j : Fin (p.mergeLT_size h).val) :
+theorem mergeLT_min (h : p.mapLT l u) (i : Fin n) (j : Fin p.mergeLT_size.val) :
     p.mergeLT_map h i = j → p.mergeLT_rep h j ≤ i
   := by
     intro h₁
@@ -395,7 +388,7 @@ theorem mergeLT_min (h : p.mapLT l u) (i : Fin n) (j : Fin (p.mergeLT_size h).va
         simp [<-h₁]
         exact (Nat.succ_pred (Nat.ne_zero_of_lt h₃)).symm
 
-theorem mergeLT_mono (h : p.mapLT l u) (i j : Fin (p.mergeLT_size h).val) :
+theorem mergeLT_mono (h : p.mapLT l u) (i j : Fin p.mergeLT_size.val) :
     i < j → p.mergeLT_rep h i < p.mergeLT_rep h j
   := by
     intro h₁
@@ -412,7 +405,7 @@ theorem mergeLT_mono (h : p.mapLT l u) (i j : Fin (p.mergeLT_size h).val) :
         exact p.mono _ _ (Nat.add_lt_add_right h₁ _)
 
 def mergeLT (h : p.mapLT l u) : Partition n where
-  size := p.mergeLT_size h
+  size := p.mergeLT_size
   map := p.mergeLT_map h
   rep := p.mergeLT_rep h
   rinv := p.mergeLT_rinv h
@@ -454,7 +447,6 @@ theorem merge_mapEq_iff (i j : Fin n) :
     exact p.mergeLT_mapEq_iff h₁ i j
 
 end
-
 
 section
 

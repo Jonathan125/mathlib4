@@ -18,7 +18,7 @@ def relation (i j : Fin n.len) : Prop := ∃ k : Fin m.len, f.toFun k = i ∧ g.
 
 def equivalence : Fin n.len → Fin n.len → Prop := EqvGen (relation f g)
 
-lemma coeq_condition_iff_eqv_exact {k : IndexCategory} (h : n ⟶ k) :
+lemma coeq_condition_iff_eqvGen_exact {k : IndexCategory} (h : n ⟶ k) :
     f ≫ h = g ≫ h ↔ ∀ (i j : Fin n.len), equivalence f g i j → h.toFun i = h.toFun j
   := by
     constructor
@@ -58,7 +58,7 @@ lemma coeq_hom_toFun : (coeq_hom f g).toFun = coeq_toFun f g :=
   Hom.toFun_mk _
 
 theorem coeq_condition : f ≫ coeq_hom f g = g ≫ coeq_hom f g := by
-  apply (coeq_condition_iff_eqv_exact f g _).mpr
+  apply (coeq_condition_iff_eqvGen_exact f g _).mpr
   intro i j hr
   simp
   exact of_relation_eqvGen_exact _ i j hr
@@ -92,7 +92,7 @@ theorem fac (hh : f ≫ h = g ≫ h) : coeq_hom f g ≫ desc f g h = h := by
   funext i
   rw [desc, <-Category.assoc, comp_toFun]
   dsimp
-  apply (coeq_condition_iff_eqv_exact f g h).mp hh
+  apply (coeq_condition_iff_eqvGen_exact f g h).mp hh
   apply of_relation_eqvGen_sound
   exact coeq_comp_rep_mapEq _ _ i
 
