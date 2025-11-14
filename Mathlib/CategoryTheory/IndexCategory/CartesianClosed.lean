@@ -67,21 +67,22 @@ def counit {m : IndexCategory} : expFunc m ⋙ tensorLeft m ⟶ 𝟭 IndexCatego
     apply (swap_nat_assoc _ _ _).trans
     simp
 
+def adjunction {m : IndexCategory} : tensorLeft m ⊣ expFunc m where
+  unit := unit
+  counit := counit
+  left_triangle_components n := by
+    simp [unit, counit]
+    apply (swap_nat_assoc _ _ _).trans
+    simp
+    rfl
+  right_triangle_components n := by
+    simp [unit, counit, expFunc]
+    apply cur_ext
+    simp [comp_prod_id, -comp_prod_comp, -comp_prod_comp_assoc]
+
 instance exponentiable {m : IndexCategory} : Exponentiable m where
   rightAdj := expFunc m
-  adj := {
-    unit := unit
-    counit := counit
-    left_triangle_components n := by
-      simp [unit, counit]
-      apply (swap_nat_assoc _ _ _).trans
-      simp
-      rfl
-    right_triangle_components n := by
-      simp [unit, counit, expFunc]
-      apply cur_ext
-      simp [comp_prod_id, -comp_prod_comp, -comp_prod_comp_assoc]
-  }
+  adj := adjunction
 
 instance closed : CartesianClosed IndexCategory :=
   CartesianClosed.mk IndexCategory (fun _ ↦ exponentiable)
