@@ -8,99 +8,118 @@ namespace CategoryTheory
 
 namespace IndexCategory
 
-section Exponential
+namespace Exponentials
 
-open 𝔽 CategoryTheory Nat
+open BinaryCoproducts BinaryProducts Nat
 
-def hom_to_exp {m n : 𝔽} (f : m ⟶ n) : (n ^ m).fin :=
-  match m with
-  | 0 => Fin.cast (Nat.pow_zero n).symm 0
-  | m + 1 => Fin.cast (Nat.pow_succ n m).symm
-    (mul_fin_mul (hom_to_exp (@ι₁ _ 1 ≫ f)) (f (last m)))
+theorem pow_zero (n : IndexCategory) : n ^ zero = one :=
+  ext _ _ <| pow_len.trans <| (congr_arg₂ _ rfl zero_len).trans <|
+    (Nat.pow_zero n.len).trans one_len.symm
 
-def exp_to_hom {m n : 𝔽} (i : (n ^ m).fin) : m ⟶ n :=
-  match m with
-  | 0 => zero_to n
-  | m + 1 => [exp_to_hom (π₁ (Fin.cast (Nat.pow_succ n m) i)),
-    const_hom (π₂ (Fin.cast (Nat.pow_succ n m) i))]
+theorem pow_succ (m n : IndexCategory) : n ^ (m + one) = n ^ m * n :=
+  ext _ _ <| pow_len.trans <| (congr_arg₂ _ rfl succ_len).trans <|
+    (Nat.pow_succ n.len m.len).trans <| (congr_arg₂ _ pow_len.symm rfl).trans <| mul_len.symm
 
-lemma hom_to_exp_to_hom_id {m n : 𝔽} (f : m ⟶ n) : exp_to_hom (hom_to_exp f) = f := by
+def hom_to_pow_fin {m n : IndexCategory} (f : m ⟶ n) : Fin (n ^ m).len := by
+  cases m with
+  | zero => exact Fin.cast (congr_arg _ (pow_zero _).symm) fin_one
+  | succ m => exact Fin.cast (congr_arg _ (pow_succ _ _).symm) <|
+    quotient_remainder_to_mul (hom_to_pow_fin (ι₁ ≫ f)) (f.toFun m.fin_succ_last)
+
+theorem hom_to_pow_fin_zero {n : IndexCategory} (f : zero ⟶ n) :
+    hom_to_pow_fin f = Fin.cast (congr_arg _ (pow_zero _).symm) fin_one :=
+  by rw [hom_to_pow_fin, IndexCategory.cases_zero]
+
+theorem hom_to_pow_fin_succ {m n : IndexCategory} (f : m + one ⟶ n) :
+    hom_to_pow_fin f = Fin.cast (congr_arg _ (pow_succ _ _).symm)
+    (quotient_remainder_to_mul (hom_to_pow_fin (ι₁ ≫ f)) (f.toFun m.fin_succ_last)) :=
+  by rw [hom_to_pow_fin, IndexCategory.cases_succ]
+
+def pow_fin_to_hom {m n : IndexCategory} (i : Fin (n ^ m).len) : m ⟶ n := by
+  cases m with
+  | zero => exact zero_to n
+  | succ m => exact match_hom (pow_fin_to_hom (π₁.toFun (Fin.cast (congr_arg _ (pow_succ _ _)) i)))
+                (one_to (π₂.toFun (Fin.cast (congr_arg _ (pow_succ _ _)) i)))
+
+theorem pow_fin_to_hom_zero {n : IndexCategory} (i : Fin (n ^ zero).len) :
+    pow_fin_to_hom i = zero_to n :=
+  zero_to_ext _ _
+
+theorem pow_fin_to_hom_succ {m n : IndexCategory} (i : Fin (n ^ (m + one)).len) :
+    pow_fin_to_hom i = match_hom
+    (pow_fin_to_hom (π₁.toFun (Fin.cast (congr_arg _ (pow_succ _ _)) i)))
+    (one_to (π₂.toFun (Fin.cast (congr_arg _ (pow_succ _ _)) i))) :=
+  by rw [pow_fin_to_hom, IndexCategory.cases_succ]
+
+@[simp]
+theorem hom_to_pow_fin_to_hom_id {m n : IndexCategory} (f : m ⟶ n) :
+    pow_fin_to_hom (hom_to_pow_fin f) = f := by
   induction m with
-  | zero => exact zero_ext _ _
+  | zero => exact zero_to_ext _ _
   | succ m ih =>
-    apply @match_ext _ 1
-    · apply (ι₁_comp_match _ _).trans
-      rw [<-ih (@ι₁ _ 1 ≫ f)]
-      exact congr_arg _ (π₁_mul_fin_mul _ _)
-    · apply (ι₂_comp_match _ _).trans
-      funext i
-      apply Fin.eq_of_val_eq
-      simp [const_hom, hom_to_exp]
-      rw [π₂_mul_fin_mul]
-      apply congr_arg
-      apply congr_arg
-      apply Fin.eq_of_val_eq
-      simp [ι₂]
+    apply match_ext
+    · simp [pow_fin_to_hom_succ, hom_to_pow_fin_succ]
+      exact ih _
+    · simp [pow_fin_to_hom_succ, hom_to_pow_fin_succ]
+      apply one_to_ext
+      simp
 
-lemma exp_to_hom_to_exp_id {m n : 𝔽} (i : (n ^ m).fin) : hom_to_exp (exp_to_hom i) = i := by
+@[simp]
+theorem pow_fin_to_hom_to_pow_fin_id {m n : IndexCategory} (i : Fin (n ^ m).len) :
+    hom_to_pow_fin (pow_fin_to_hom i) = i := by
   induction m with
-  | zero => exact Fin.subsingleton_one.elim _ _
+  | zero =>
+    exact (Fin.subsingleton_iff_le_one.mpr ((congr_arg _ (pow_zero n)).trans one_len).le).elim _ _
   | succ m ih =>
-    unfold exp_to_hom hom_to_exp
-    apply Fin.eq_of_val_eq
-    simp [ih]
-    exact div_add_mod _ _
+    ext
+    simp [hom_to_pow_fin_succ, pow_fin_to_hom_succ, ih, div_add_mod]
 
-def eval {m n : 𝔽} : n ^ m * m ⟶ n :=
-  fun i ↦ exp_to_hom (π₁ i) (π₂ i)
+def eval {m n : IndexCategory} : n ^ m * m ⟶ n :=
+  Hom.mk <| fun i ↦ (pow_fin_to_hom (π₁.toFun i)).toFun (π₂.toFun i)
 
-def cur {k m n : 𝔽} (f : k * m ⟶ n) : k ⟶ n ^ m :=
-  fun i ↦ hom_to_exp (fun j ↦ f (mul_fin_mul i j))
+@[simp]
+theorem eval_toFun_apply {m n : IndexCategory} (i : Fin (n ^ m * m).len) :
+    eval.toFun i = (pow_fin_to_hom (π₁.toFun i)).toFun (π₂.toFun i) :=
+  Hom.toFun_mk_apply _ _
+
+def cur {k m n : IndexCategory} (f : k * m ⟶ n) : k ⟶ n ^ m :=
+  Hom.mk <| fun i ↦ hom_to_pow_fin <| Hom.mk <| fun j ↦ f.toFun (quotient_remainder_to_mul i j)
+
+@[simp]
+theorem cur_toFun_apply {m n k : IndexCategory} (f : k * m ⟶ n) (i : Fin k.len) :
+    (cur f).toFun i = hom_to_pow_fin (Hom.mk <| fun j ↦ f.toFun (quotient_remainder_to_mul i j)) :=
+  Hom.toFun_mk_apply _ _
 
 @[reassoc (attr := simp)]
-lemma cur_id_comp_eval {k m n : 𝔽} (f : k * m ⟶ n) : prod_hom (cur f) (𝟙 m) ≫ eval = f := by
-  funext i
-  change exp_to_hom ((pair_hom _ _ ≫ π₁) i) _ = _
-  rw [pair_comp_π₁]
-  simp [cur, hom_to_exp_to_hom_id,]
-  apply congr_arg
-  change mul_fin_mul _ ((pair_hom _ _ ≫ π₂) _) = _
-  rw [pair_comp_π₂]
-  exact Fin.eq_of_val_eq (div_add_mod _ _)
+theorem cur_prod_id_comp_eval {m n k : IndexCategory} (f : k * m ⟶ n) :
+    prod_hom (cur f) (𝟙 m) ≫ eval = f := by
+  ext i
+  simp
+  apply congr_toFun_apply_val
+  simp [div_add_mod]
 
-lemma cur_uniq {k m n : 𝔽} (f : k * m ⟶ n) (g : k ⟶ n ^ m) :
-    prod_hom g (𝟙 m) ≫ eval = f → g = cur f
-  := by
-    intro h
-    funext i
-    apply Function.LeftInverse.injective exp_to_hom_to_exp_id
-    simp [cur]
-    rw [hom_to_exp_to_hom_id]
-    rw [<-h]
-    funext j
-    simp [eval, prod_hom, pair_hom]
-    simp [π₁_mul_fin_mul, π₂_mul_fin_mul]
+theorem cur_uniq {m n k : IndexCategory} {f : k * m ⟶ n} {g : k ⟶ n ^ m} :
+    prod_hom g (𝟙 m) ≫ eval = f → g = cur f := by
+  intro h
+  ext i : 2
+  apply Function.LeftInverse.injective pow_fin_to_hom_to_pow_fin_id
+  simp
+  rw [<-h]
+  simp
 
-lemma cur_ext {k m n : 𝔽} (f g : k ⟶ n ^ m) :
-    prod_hom f (𝟙 m) ≫ eval = prod_hom g (𝟙 m) ≫ eval → f = g
-  := by
-    intro h
-    calc
-     _ = cur (prod_hom f (𝟙 m) ≫ eval) := cur_uniq _ _ rfl
-     _ = cur (prod_hom g (𝟙 m) ≫ eval) := congr_arg _ h
-     _ = _ := (cur_uniq _ _ rfl).symm
+theorem cur_ext {m n k : IndexCategory} (f g : k ⟶ n ^ m) :
+    prod_hom f (𝟙 m) ≫ eval = prod_hom g (𝟙 m) ≫ eval → f = g :=
+  fun h ↦ (cur_uniq rfl).trans <| (congr_arg _ h).trans (cur_uniq rfl).symm
 
-def expFunc (m : 𝔽) : 𝔽 ⥤ 𝔽 where
+def expFunc (m : IndexCategory) : IndexCategory ⥤ IndexCategory where
   obj n := n ^ m
   map f := cur (eval ≫ f)
-  map_id n := by apply (cur_uniq _ _ _).symm ; simp [id_prod_id]
-  map_comp f g := by
-    apply (cur_uniq _ _ _).symm
-    rw [comp_prod_id, Category.assoc, cur_id_comp_eval]
-    rw [<-Category.assoc, cur_id_comp_eval]
-    exact Category.assoc _ _ _
+  map_id n :=
+    (cur_uniq (by simp)).symm
+  map_comp f g :=
+    (cur_uniq (by rw [comp_prod_id, Category.assoc] ; simp)).symm
 
-end Exponential
+end Exponentials
 
 end IndexCategory
 

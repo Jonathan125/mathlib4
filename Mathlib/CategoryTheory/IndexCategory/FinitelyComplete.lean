@@ -7,40 +7,39 @@ namespace CategoryTheory
 
 namespace IndexCategory
 
-open 𝔽 Limits
+open Limits
 
-section FiniteProducts
+namespace FiniteProducts
 
-instance hasFiniteProducts : HasFiniteProducts 𝔽 :=
+instance hasFiniteProducts : HasFiniteProducts IndexCategory :=
   hasFiniteProducts_of_has_binary_and_terminal
 
 end FiniteProducts
 
 
-section Equalizers
+namespace Equalizers
 
-open Fork IsLimit HasLimit
+variable {m n : IndexCategory} (f g : m ⟶ n)
 
-variable {m n : 𝔽} (f g : m ⟶ n)
-
-def equalizer_fork : Fork f g := ofι (equal f g) (equal_condition f g)
+def equalizer_fork : Fork f g :=
+  Fork.ofι (Equalizers.hom f g) (Equalizers.condition f g)
 
 def equalizer : IsLimit (equalizer_fork f g) :=
-  Fork.IsLimit.mk _ (fun s ↦ lift s.condition)
-    (fun s ↦ fac s.condition) (fun s _ ↦ uniq s.condition _)
+  Fork.IsLimit.mk _ (fun s ↦ Equalizers.lift s.condition)
+    (fun s ↦ Equalizers.fac s.condition) (fun s _ ↦ Equalizers.uniq s.condition _)
 
 instance hasLimitParallelPair : HasLimit (parallelPair f g) :=
-  mk ⟨_, equalizer f g⟩
+  HasLimit.mk ⟨_, equalizer f g⟩
 
-instance hasEqualizers : HasEqualizers 𝔽 :=
-  hasEqualizers_of_hasLimit_parallelPair 𝔽
+instance hasEqualizers : HasEqualizers IndexCategory :=
+  hasEqualizers_of_hasLimit_parallelPair IndexCategory
 
 end Equalizers
 
 
-section FinitelyComplete
+namespace FinitelyComplete
 
-instance fintelyComplete : HasFiniteLimits 𝔽 :=
+instance fintelyComplete : HasFiniteLimits IndexCategory :=
   hasFiniteLimits_of_hasEqualizers_and_finite_products
 
 end FinitelyComplete

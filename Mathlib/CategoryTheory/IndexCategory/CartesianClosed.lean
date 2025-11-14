@@ -6,103 +6,84 @@ namespace CategoryTheory
 
 namespace IndexCategory
 
-open 𝔽 Limits
+open Limits
 
 
-section Terminal
+namespace Terminal
 
 def terminal : IsTerminal one where
   lift s := to_one s.pt
-  uniq _ _ _ := one_ext _ _
+  uniq _ _ _ := to_one_ext _ _
 
-instance hasInitial : HasTerminal 𝔽 := terminal.hasTerminal
+instance hasInitial : HasTerminal IndexCategory := terminal.hasTerminal
 
 end Terminal
 
 
-section BinaryProducts
+namespace BinaryProducts
 
-open BinaryFan HasLimit
+def binary_fan (m n : IndexCategory) : BinaryFan m n := BinaryFan.mk π₁ π₂
 
-def binary_fan (m n : 𝔽) : BinaryFan m n := mk π₁ π₂
+def binary_product {m n : IndexCategory} : IsLimit (binary_fan m n) :=
+  BinaryFan.isLimitMk (fun s ↦ pair_hom s.fst s.snd)
+    (fun _ ↦ pair_comp_π₁ _ _) (fun _ ↦ pair_comp_π₂ _ _) (fun _ _ ↦ pair_uniq)
 
-def binary_product {m n : 𝔽} : IsLimit (binary_fan m n) :=
-  isLimitMk (fun s ↦ pair_hom s.fst s.snd)
-    (fun _ ↦ pair_comp_π₁ _ _) (fun _ ↦ pair_comp_π₂ _ _) (fun _ ↦ pair_hom_ext _ _)
+instance hasLimitPair {m n : IndexCategory} : HasLimit (pair m n) :=
+  HasLimit.mk ⟨_, binary_product⟩
 
-instance hasLimitPair {m n : 𝔽} : HasLimit (pair m n) :=
-  mk ⟨_, binary_product⟩
-
-instance hasBinaryProducts : HasBinaryProducts 𝔽 :=
-  hasBinaryProducts_of_hasLimit_pair 𝔽
+instance hasBinaryProducts : HasBinaryProducts IndexCategory :=
+  hasBinaryProducts_of_hasLimit_pair IndexCategory
 
 end BinaryProducts
 
 
-section Monoidal
+namespace Monoidal
 
-open CartesianMonoidalCategory
+open CartesianMonoidalCategory Terminal BinaryProducts
 
-instance cartesianMonoidal : CartesianMonoidalCategory 𝔽 := ofChosenFiniteProducts
-  (LimitCone.mk _ terminal) (fun _ _ ↦ LimitCone.mk _ binary_product)
+instance cartesianMonoidal : CartesianMonoidalCategory IndexCategory :=
+  ofChosenFiniteProducts (LimitCone.mk _ terminal) (fun _ _ ↦ LimitCone.mk _ binary_product)
 
 end Monoidal
 
 
 section Closed
 
-open MonoidalCategory
+open MonoidalCategory BinaryProducts Exponentials
 
-def unit {m : 𝔽} : 𝟭 𝔽 ⟶ tensorLeft m ⋙ expFunc m where
+def unit {m : IndexCategory} : 𝟭 IndexCategory ⟶ tensorLeft m ⋙ expFunc m where
   app n := cur swap
   naturality n k f := by
     simp [expFunc]
     apply cur_ext
-    rw [comp_prod_id, Category.assoc, cur_id_comp_eval]
-    rw [comp_prod_id, Category.assoc, cur_id_comp_eval]
-    rw [<-Category.assoc, cur_id_comp_eval]
-    unfold swap
-    rw [comp_pair_hom, pair_comp_π₁, pair_comp_π₂]
-    change _ = _ ≫ prod_hom (𝟙 m) f
-    exact (pair_hom_ext _ _ _ (by simp) (by simp)).symm
+    simp [comp_prod_id, -comp_prod_comp]
+    exact swap_nat _ _
 
-def counit {m : 𝔽} : expFunc m ⋙ tensorLeft m ⟶ 𝟭 𝔽 where
+def counit {m : IndexCategory} : expFunc m ⋙ tensorLeft m ⟶ 𝟭 IndexCategory where
   app n := swap ≫ eval
   naturality n k f := by
     simp [expFunc]
-    change prod_hom (𝟙 m) _ ≫ _ = _
-    rw [<-Category.assoc, prod_swap_nat]
-    rw [Category.assoc, cur_id_comp_eval]
+    apply (swap_nat_assoc _ _ _).trans
+    simp
 
-instance exponentiable {m : 𝔽} : Exponentiable m where
+instance exponentiable {m : IndexCategory} : Exponentiable m where
   rightAdj := expFunc m
   adj := {
     unit := unit
     counit := counit
     left_triangle_components n := by
       simp [unit, counit]
-      change prod_hom (𝟙 m) _ ≫ _ = _
-      rw [<-Category.assoc, prod_swap_nat]
-      rw [Category.assoc, cur_id_comp_eval]
-      unfold swap
-      simp [comp_pair_hom]
-      exact (pair_hom_ext _ _ _ rfl rfl).symm
+      apply (swap_nat_assoc _ _ _).trans
+      simp
+      rfl
     right_triangle_components n := by
       simp [unit, counit, expFunc]
       apply cur_ext
-      rw [id_prod_id, comp_prod_id]
-      rw [Category.assoc, comp_prod_id]
-      rw [Category.assoc, cur_id_comp_eval]
-      rw [cur_id_comp_eval_assoc, Category.assoc]
-      rw [cur_id_comp_eval_assoc]
-      rw [<-Category.assoc]
-      apply eq_whisker
-      unfold swap
-      simp [comp_pair_hom]
-      exact (pair_hom_ext _ _ _ rfl rfl).symm
+      simp [comp_prod_id, -comp_prod_comp, -comp_prod_comp_assoc]
   }
 
-instance closed : CartesianClosed 𝔽 := CartesianClosed.mk 𝔽 (fun _ ↦ exponentiable)
+instance closed : CartesianClosed IndexCategory :=
+  CartesianClosed.mk IndexCategory (fun _ ↦ exponentiable)
 
 end Closed
 

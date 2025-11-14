@@ -1,5 +1,5 @@
 import Mathlib.CategoryTheory.Limits.Constructions.LimitsOfProductsAndEqualizers
-import Mathlib.CategoryTheory.IndexCategory.Coproduct
+import Mathlib.CategoryTheory.IndexCategory.Coproducts
 import Mathlib.CategoryTheory.IndexCategory.Coequalizers
 
 
@@ -10,7 +10,7 @@ namespace IndexCategory
 open Limits
 
 
-section Initial
+namespace Initial
 
 def initial : IsInitial zero where
   desc s := zero_to s.pt
@@ -22,7 +22,7 @@ instance hasInitial : HasInitial IndexCategory :=
 end Initial
 
 
-section BinaryCoproducts
+namespace BinaryCoproducts
 
 def binary_cofan (m n : IndexCategory) : BinaryCofan m n :=
   BinaryCofan.mk ι₁ ι₂
@@ -40,7 +40,7 @@ instance hasBinaryCoproducts : HasBinaryCoproducts IndexCategory :=
 end BinaryCoproducts
 
 
-section FiniteCoproducts
+namespace FiniteCoproducts
 
 def finite_cofan_colimit {n : IndexCategory} (f : Fin n.len → IndexCategory) :
     IsColimit (Cofan.mk (sum f) (ι f)) :=
@@ -65,7 +65,7 @@ instance hasFiniteCoproducts : HasFiniteCoproducts IndexCategory :=
 end FiniteCoproducts
 
 
-section Coequalizers
+namespace Coequalizers
 
 variable {m n : IndexCategory} (f g : m ⟶ n)
 
@@ -85,13 +85,12 @@ instance hasCoequalizers : HasCoequalizers IndexCategory :=
 end Coequalizers
 
 
-section FinitelyCocomplete
+namespace FinitelyCocomplete
 
 instance finitelyCocomplete : HasFiniteColimits IndexCategory :=
   hasFiniteColimits_of_hasCoequalizers_and_finite_coproducts
 
 end FinitelyCocomplete
-
 
 end IndexCategory
 

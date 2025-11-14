@@ -1,13 +1,15 @@
 import Mathlib.Data.Fin.Tuple.Basic
 import Mathlib.CategoryTheory.Skeletal
-import Mathlib.CategoryTheory.IndexCategory.Defs
+import Mathlib.CategoryTheory.IndexCategory.Basic
 
 
 namespace CategoryTheory
 
 namespace IndexCategory
 
-lemma to_pred_fun_not_inj {m : ℕ} (f : Fin (m + 1) → Fin m) : ¬ Function.Injective f := by
+namespace Skeletal
+
+theorem to_pred_fun_not_inj {m : ℕ} (f : Fin (m + 1) → Fin m) : ¬ Function.Injective f := by
   apply Function.not_injective_iff.mpr
   induction m with
   | zero => exact (f 0).elim0
@@ -57,7 +59,7 @@ lemma to_pred_fun_not_inj {m : ℕ} (f : Fin (m + 1) → Fin m) : ¬ Function.In
         apply And.intro (Fin.eq_of_val_eq (h₁.trans h₂.right.symm))
         exact h₂.left.symm
 
-lemma le_of_inj_hom {m n : IndexCategory} (f : m ⟶ n) :
+theorem le_of_inj_hom {m n : IndexCategory} (f : m ⟶ n) :
     Function.Injective f.toFun → m.len ≤ n.len := by
   intro h
   induction m with
@@ -75,11 +77,13 @@ lemma le_of_inj_hom {m n : IndexCategory} (f : m ⟶ n) :
     obtain rfl : m = n := ext _ _ he
     exact to_pred_fun_not_inj g hg
 
-lemma eq_of_iso {m n : IndexCategory} (i : m ≅ n) : m = n :=
+theorem eq_of_iso {m n : IndexCategory} (i : m ≅ n) : m = n :=
   ext _ _ <| Nat.le_antisymm (le_of_inj_hom _ (iso_hom_toFun_injective i)) <|
     le_of_inj_hom _ <| iso_inv_toFun_injective i
 
 theorem isSkeletal : Skeletal IndexCategory := fun _ _ h ↦ eq_of_iso h.some
+
+end Skeletal
 
 end IndexCategory
 

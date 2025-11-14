@@ -1,6 +1,6 @@
 import Mathlib.Data.FinEnum
 import Mathlib.CategoryTheory.IndexCategory.Partition
-import Mathlib.CategoryTheory.IndexCategory.Defs
+import Mathlib.CategoryTheory.IndexCategory.Basic
 
 
 namespace CategoryTheory
