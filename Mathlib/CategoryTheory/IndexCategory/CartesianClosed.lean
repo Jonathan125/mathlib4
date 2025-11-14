@@ -41,15 +41,16 @@ namespace Monoidal
 
 open CartesianMonoidalCategory Terminal BinaryProducts
 
-instance cartesianMonoidal : CartesianMonoidalCategory IndexCategory :=
+scoped instance cartesianMonoidal : CartesianMonoidalCategory IndexCategory :=
   ofChosenFiniteProducts (LimitCone.mk _ terminal) (fun _ _ ↦ LimitCone.mk _ binary_product)
 
 end Monoidal
 
 
-section Closed
+namespace Closed
 
 open MonoidalCategory BinaryProducts Exponentials
+open scoped Monoidal
 
 def unit {m : IndexCategory} : 𝟭 IndexCategory ⟶ tensorLeft m ⋙ expFunc m where
   app n := cur swap

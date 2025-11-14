@@ -40,6 +40,12 @@ theorem ι₂_toFun_apply_val {m n : IndexCategory} (i : Fin n.len) :
     ((@ι₂ m _ ).toFun i).val = m.len + i.val :=
   congr_arg _ <| Hom.toFun_mk_apply _ _
 
+theorem ι₁_injective {m n : IndexCategory} : Function.Injective (ι₁ : m ⟶ m + n).toFun :=
+  fun i j h ↦ by ext ; simpa using Fin.val_eq_of_eq h
+
+theorem ι₂_injective {m n : IndexCategory} : Function.Injective (ι₂ : n ⟶ m + n).toFun :=
+  fun i j h ↦ by ext ; simpa using Fin.val_eq_of_eq h
+
 @[simp]
 theorem ι₁_toFun_sum_to_initial_id {m n : IndexCategory} (i : Fin (m + n).len) (h : i.val < m.len) :
     ι₁.toFun (sum_to_initial i h) = i :=

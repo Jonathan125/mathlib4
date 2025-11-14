@@ -41,7 +41,7 @@ protected def recOn (n : IndexCategory) {F : IndexCategory → Sort*} (h : ∀ n
 
 protected theorem rec_heq {F : IndexCategory → Sort*} (h : ∀ n : ℕ, F (mk n)) :
     ∀ n, IndexCategory.rec h n ≍ h n.len :=
-  IndexCategory.rec <| fun n ↦ by simp [IndexCategory.rec]
+  IndexCategory.rec <| by simp [IndexCategory.rec]
 
 protected theorem recOn_heq (n : IndexCategory) {F : IndexCategory → Sort*}
     (h : ∀ n : ℕ, F (mk n)) : IndexCategory.recOn n h ≍ h n.len :=
@@ -500,6 +500,23 @@ theorem iso_inv_toFun_surjective {m n : IndexCategory} (h : m ≅ n) :
 
 theorem iso_inv_toFun_bijective {m n : IndexCategory} (h : m ≅ n) :
   Function.Bijective h.inv.toFun := iso_hom_toFun_bijective h.symm
+
+theorem eq_iff_comp_inj_eq {m n : IndexCategory} {f : m ⟶ n} (h : Function.Injective f.toFun)
+    {k : IndexCategory} (g₁ g₂ : k ⟶ m) : g₁ = g₂ ↔ g₁ ≫ f = g₂ ≫ f := by
+  apply Iff.intro (· =≫ f)
+  intro h'
+  ext i : 2
+  apply h
+  simpa using congr_fun (congr_arg Hom.toFun h') i
+
+theorem eq_iff_surj_comp_eq {m n : IndexCategory} {f : m ⟶ n} (h : Function.Surjective f.toFun)
+    {k : IndexCategory} (g₁ g₂ : n ⟶ k) : g₁ = g₂ ↔ f ≫ g₁ = f ≫ g₂ := by
+  apply Iff.intro (f ≫= ·)
+  intro h'
+  ext i : 2
+  apply Exists.elim (h i)
+  intro j h
+  simpa [<-h] using congr_fun (congr_arg Hom.toFun h') j
 
 end IndexCategory
 

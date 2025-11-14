@@ -153,25 +153,70 @@ protected theorem hom_comp_uneq_eq_ι₁ {m n : IndexCategory} (f g : m ⟶ n) :
       ext i
       simp
 
+protected theorem comp_uneq_lt_of_condition {m n k : IndexCategory} (f g : m ⟶ n) (h : k ⟶ m) :
+    h ≫ f = h ≫ g →
+    ∀ i : Fin k.len, ((h ≫ Equalizers.uneq f g).toFun i).val < (Equalizers.obj f g).len := by
+  intro hh i
+  simp
+  apply Equalizers.uneq_toFun_apply_val_lt_of_agree
+  simpa using congr_fun (congr_arg Hom.toFun hh) i
+
+protected def lift {m n k : IndexCategory} {f g : m ⟶ n} {h : k ⟶ m} (hh : h ≫ f = h ≫ g) :
+    k ⟶ Equalizers.obj f g :=
+  Hom.mk <| fun i ↦ Fin.mk _ <| Equalizers.comp_uneq_lt_of_condition _ _ _ hh i
+
+@[reassoc (attr := simp)]
+protected theorem lift_comp_ι₁_eq_post_comp_uneq {m n k : IndexCategory} {f g : m ⟶ n} {h : k ⟶ m}
+    (hh : h ≫ f = h ≫ g) : Equalizers.lift hh ≫ ι₁ = h ≫ Equalizers.uneq f g :=
+  by ext i ; simp [Equalizers.lift]
+
+@[reassoc]
+protected theorem hom_comp_ι₁_nat {m n : IndexCategory} (f g : m ⟶ n) :
+    Equalizers.hom f g ≫ ι₁ = ι₁ ≫ (Equalizers.hom f g ++ 𝟙 one) :=
+  by ext i ; simp
+
 protected def id_if_eq {m n : IndexCategory} (f g : m ⟶ n) : m ⟶ m + one :=
   Hom.mk <| fun i ↦ if f.toFun i = g.toFun i then ι₁.toFun i else m.fin_succ_last
 
-protected theorem id_if_eq_toFun_apply_agree {m n : IndexCategory} (f g : m ⟶ n)
-    (i : Fin m.len) (h : f.toFun i = g.toFun i) : (Equalizers.id_if_eq f g).toFun i = ι₁.toFun i :=
-  (Hom.toFun_mk_apply _ _).trans <| by simp [h]
+protected theorem comp_id_if_eq_of_condition {m n k : IndexCategory} {f g : m ⟶ n} {h : k ⟶ m}
+    (hh : h ≫ f = h ≫ g) : h ≫ Equalizers.id_if_eq f g = h ≫ ι₁ := by
+  ext i
+  have h₁ := congr_fun (congr_arg Hom.toFun hh) i
+  simp at h₁
+  simp [Equalizers.id_if_eq, h₁]
 
-protected theorem id_if_eq_toFun_apply_not_agree {m n : IndexCategory} (f g : m ⟶ n)
-    (i : Fin m.len) (h : ¬ f.toFun i = g.toFun i) :
-    (Equalizers.id_if_eq f g).toFun i = m.fin_succ_last :=
-  (Hom.toFun_mk_apply _ _).trans <| by simp [h]
-
-protected theorem id_if_eq_toFun_apply_val {m n : IndexCategory} (f g : m ⟶ n) (i : Fin m.len) :
-    ((Equalizers.id_if_eq f g).toFun i).val
-    = if f.toFun i = g.toFun i then i.val else m.len := by
-  if h : f.toFun i = g.toFun i then
-    simp [Equalizers.id_if_eq_toFun_apply_agree _ _ _ h, h]
+@[reassoc (attr := simp)]
+protected theorem ι₁_comp_id_if_eq_succ_nat {m n : IndexCategory} (f g : m + one ⟶ n) :
+    ι₁ ≫ Equalizers.id_if_eq f g =
+    Equalizers.id_if_eq (ι₁ ≫ f) (ι₁ ≫ g) ≫ match_hom (ι₁ ≫ ι₁) ι₂ := by
+  ext i
+  if h₁ : ((Equalizers.id_if_eq (ι₁ ≫ f) (ι₁ ≫ g)).toFun i).val < m.len then
+    have h₂ : (ι₁ ≫ f).toFun i = (ι₁ ≫ g).toFun i := by
+      rw [Equalizers.id_if_eq] at h₁
+      dsimp at h₁
+      apply by_contradiction
+      intro h₂
+      rw [ite_cond_eq_false _ _ (eq_false_intro h₂)] at h₁
+      apply Nat.not_le_of_lt h₁
+      exact Nat.le_refl _
+    simp [h₁]
+    nth_rewrite 2 [Equalizers.id_if_eq]
+    dsimp
+    rw [ite_cond_eq_true _ _ (eq_true_intro h₂)]
+    simp [Equalizers.id_if_eq]
+    simp at h₂
+    simp [h₂]
   else
-    simp [Equalizers.id_if_eq_toFun_apply_not_agree _ _ _ h, h]
+    have h₂ := eq_last_of_not_lt h₁
+    simp [Equalizers.id_if_eq] at h₂
+    have h₃ : ¬ (ι₁ ≫ f).toFun i = (ι₁ ≫ g).toFun i :=
+      not_imp_not.mpr (by simpa using h₂) (Fin.ne_of_val_ne i.isLt.ne)
+    nth_rewrite 2 [Equalizers.id_if_eq, comp_toFun]
+    dsimp
+    rw [ite_cond_eq_false _ _ (eq_false_intro h₃)]
+    simp [Equalizers.id_if_eq]
+    simp at h₃
+    simp [h₃]
 
 @[reassoc (attr := simp)]
 protected theorem uneq_comp_hom_sum_id_eq_id_if_eq {m n : IndexCategory} (f g : m ⟶ n) :
@@ -185,112 +230,38 @@ protected theorem uneq_comp_hom_sum_id_eq_id_if_eq {m n : IndexCategory} (f g : 
           assoc_sum_sum_nat]
         rw [<-Category.comp_id (Equalizers.hom _ _), <-Category.id_comp ι₂]
         rw [<-sum_comp_sum, Category.assoc, <-Category.assoc, ih]
+        apply whisker_eq
         ext i
         simp
-        if hi : (ι₁ ≫ f).toFun i = (ι₁ ≫ g).toFun i then
-          have hi' : f.toFun (Fin.cast succ_len.symm i.castSucc)
-            = g.toFun (Fin.cast succ_len.symm i.castSucc) := by simpa using hi
-          simp [Equalizers.id_if_eq_toFun_apply_agree _ _ _ hi,
-            Equalizers.id_if_eq_toFun_apply_agree _ _ _ hi']
-        else
-          have hi' : ¬ f.toFun (Fin.cast succ_len.symm i.castSucc)
-            = g.toFun (Fin.cast succ_len.symm i.castSucc) := by simpa using hi
-          simp [Equalizers.id_if_eq_toFun_apply_not_agree _ _ _ hi,
-            Equalizers.id_if_eq_toFun_apply_not_agree _ _ _ hi']
       else
         simp [Equalizers.uneq_succ_not_last_agree h, Equalizers.hom_succ_not_last_agree h]
         rw [<-Category.id_comp (𝟙 one), <-sum_comp_sum, <-Category.assoc, ih]
-        ext i
-        simp
-        if hi : (ι₁ ≫ f).toFun i = (ι₁ ≫ g).toFun i then
-          have hi' : f.toFun (Fin.cast succ_len.symm i.castSucc)
-            = g.toFun (Fin.cast succ_len.symm i.castSucc) := by simpa using hi
-          simp [Equalizers.id_if_eq_toFun_apply_agree _ _ _ hi,
-            Equalizers.id_if_eq_toFun_apply_agree _ _ _ hi']
-        else
-          have hi' : ¬ f.toFun (Fin.cast succ_len.symm i.castSucc)
-            = g.toFun (Fin.cast succ_len.symm i.castSucc) := by simpa using hi
-          simp [Equalizers.id_if_eq_toFun_apply_not_agree _ _ _ hi,
-            Equalizers.id_if_eq_toFun_apply_not_agree _ _ _ hi']
+        exact _ ≫= congr_arg₂ _ rfl (Category.id_comp _)
     · apply one_to_ext
       if h : Equalizers.last_agree f g then
         simp [Equalizers.uneq_toFun_apply_val_lt_of_agree _ _ _ h]
-        simp [Equalizers.uneq_succ_last_agree h, Equalizers.hom_succ_last_agree h,
-          Equalizers.id_if_eq_toFun_apply_val]
-        exact h
+        simp [Equalizers.uneq_succ_last_agree h, Equalizers.hom_succ_last_agree h]
+        simp [Equalizers.id_if_eq, h]
       else
-        simp [Equalizers.uneq_succ_not_last_agree h, Equalizers.hom_succ_not_last_agree h,
-          Equalizers.id_if_eq_toFun_apply_val]
-        exact h
+        simp [Equalizers.uneq_succ_not_last_agree h, Equalizers.hom_succ_not_last_agree h]
+        simp [Equalizers.id_if_eq, h]
 
-protected theorem comp_uneq_lt_of_condition {m n k : IndexCategory} (f g : m ⟶ n) (h : k ⟶ m) :
-    h ≫ f = h ≫ g →
-    ∀ i : Fin k.len, ((h ≫ Equalizers.uneq f g).toFun i).val < (Equalizers.obj f g).len := by
-  intro hh i
-  simp
-  apply Equalizers.uneq_toFun_apply_val_lt_of_agree
-  simpa using congr_fun (congr_arg Hom.toFun hh) i
-
-protected def lift {m n k : IndexCategory} {f g : m ⟶ n} {h : k ⟶ m} (hh : h ≫ f = h ≫ g) :
-    k ⟶ Equalizers.obj f g :=
-  Hom.mk <| fun i ↦ Fin.mk _ <| Equalizers.comp_uneq_lt_of_condition _ _ _ hh i
-
-theorem lift_comp_ι₁_eq_post_comp_uneq {m n k : IndexCategory} {f g : m ⟶ n} (h : k ⟶ m)
-    (hh : h ≫ f = h ≫ g) : Equalizers.lift hh ≫ ι₁ = h ≫ Equalizers.uneq f g :=
-  by ext _ ; simp [Equalizers.lift]
-
-theorem hom_post_comp_uneq_comp_hom_sum_id_iff_hom_comp_lift_comp_hom {m n k : IndexCategory}
-    {f g : m ⟶ n} (h : k ⟶ m) (hh : h ≫ f = h ≫ g) {l₁ l₂ : IndexCategory} (u₁ : l₁ ⟶ k)
-    (u₂ : Equalizers.obj f g ⟶ l₂) {v : l₁ ⟶ l₂} :
-    u₁ ≫ h ≫ Equalizers.uneq f g ≫ (u₂ ++ 𝟙 one) = v ≫ ι₁ ↔ u₁ ≫ Equalizers.lift hh ≫ u₂ = v := by
-  have hlt (i : Fin l₁.len) := Equalizers.comp_uneq_lt_of_condition f g h hh (u₁.toFun i)
-  simp at hlt
-  constructor
-  · intro h₁
-    ext i
-    replace h₁ := Fin.val_eq_of_eq (congr_fun (congr_arg Hom.toFun h₁) i)
-    simp [hlt i] at h₁
-    rw [<-h₁]
-    simp [Equalizers.lift]
-    rfl
-  · intro h₁
-    ext i
-    replace h₁ := Fin.val_eq_of_eq (congr_fun (congr_arg Hom.toFun h₁) i)
-    simp [hlt i, <-h₁, Equalizers.lift]
-    rfl
-
-theorem post_comp_uneq_iff_lift {m n k : IndexCategory} {f g : m ⟶ n} (h : k ⟶ m)
-    (hh : h ≫ f = h ≫ g) {u : k ⟶ Equalizers.obj f g} :
-    h ≫ Equalizers.uneq f g = u ≫ ι₁ ↔ Equalizers.lift hh = u :=
-  by simpa using hom_post_comp_uneq_comp_hom_sum_id_iff_hom_comp_lift_comp_hom h hh (𝟙 _) (𝟙 _)
-
-theorem post_comp_uneq_comp_hom_sum_id_iff_lift_comp_hom {m n k : IndexCategory} {f g : m ⟶ n}
-    (h : k ⟶ m) (hh : h ≫ f = h ≫ g) {l : IndexCategory} {u : Equalizers.obj f g ⟶ l}
-    {v : k ⟶ l} : h ≫ Equalizers.uneq f g ≫ (u ++ 𝟙 _) = v ≫ ι₁ ↔ Equalizers.lift hh ≫ u = v :=
-  by simpa using hom_post_comp_uneq_comp_hom_sum_id_iff_hom_comp_lift_comp_hom h hh (𝟙 _) _
-
-theorem hom_post_comp_uneq_iff_hom_comp_lift {m n k : IndexCategory} {f g : m ⟶ n} (h : k ⟶ m)
-    (hh : h ≫ f = h ≫ g) {l : IndexCategory} {u : l ⟶ k} {v : l ⟶ Equalizers.obj f g} :
-    u ≫ h ≫ Equalizers.uneq f g = v ≫ ι₁ ↔ u ≫ Equalizers.lift hh = v :=
-  by simpa using hom_post_comp_uneq_comp_hom_sum_id_iff_hom_comp_lift_comp_hom h hh _ (𝟙 _)
-
+@[simp]
 protected theorem lift_hom_id {m n : IndexCategory} {f g : m ⟶ n} :
     Equalizers.lift (Equalizers.condition f g) = 𝟙 (Equalizers.obj f g) :=
-  (post_comp_uneq_iff_lift _ _).mp <|
-    (Equalizers.hom_comp_uneq_eq_ι₁ f g).trans (Category.id_comp _).symm
+  (eq_iff_comp_inj_eq (@ι₁_injective _ one) _ _).mpr <| by simp
 
-
+@[reassoc (attr := simp)]
 protected theorem fac {m n k : IndexCategory} {f g : m ⟶ n} {h : k ⟶ m} (hh : h ≫ f = h ≫ g) :
     Equalizers.lift hh ≫ Equalizers.hom f g = h :=
-  (post_comp_uneq_comp_hom_sum_id_iff_lift_comp_hom _ hh).mp <| by
-  ext i ; simp [Equalizers.id_if_eq_toFun_apply_agree _ _ _
-    (by simpa using congr_fun (congr_arg Hom.toFun hh) i)]
+  (eq_iff_comp_inj_eq (@ι₁_injective _ one) _ _).mpr <| by
+    simp [Equalizers.hom_comp_ι₁_nat, -ι₁_comp_match]
+    exact Equalizers.comp_id_if_eq_of_condition hh
 
 protected theorem uniq {m n k : IndexCategory} {f g : m ⟶ n} {h : k ⟶ m} (hh : h ≫ f = h ≫ g)
     (s : k ⟶ Equalizers.obj f g) (hs : s ≫ Equalizers.hom f g = h) : s = Equalizers.lift hh :=
   ((s ≫= Equalizers.lift_hom_id).trans (Category.comp_id s)).symm.trans <|
-    (hom_post_comp_uneq_iff_hom_comp_lift _ (Equalizers.condition f g)).mp <|
-    (Category.assoc _ _ _).symm.trans <| (hs =≫ _).trans (lift_comp_ι₁_eq_post_comp_uneq _ _).symm
+    (eq_iff_comp_inj_eq (@ι₁_injective _ one) _ _).mpr <| by simp [<-hs]
 
 end Equalizers
 
