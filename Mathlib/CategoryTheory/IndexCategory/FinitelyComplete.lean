@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2025 Jonathan Konig. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Jonathan Konig
+-/
 import Mathlib.CategoryTheory.Limits.Constructions.LimitsOfProductsAndEqualizers
 import Mathlib.CategoryTheory.IndexCategory.CartesianClosed
 import Mathlib.CategoryTheory.IndexCategory.Equalizers

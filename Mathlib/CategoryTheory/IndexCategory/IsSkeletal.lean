@@ -1,7 +1,18 @@
+/-
+Copyright (c) 2025 Jonathan Konig. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Jonathan Konig
+-/
 import Mathlib.Data.Fin.Tuple.Basic
 import Mathlib.CategoryTheory.Skeletal
 import Mathlib.CategoryTheory.IndexCategory.Basic
 
+/-! # The index category is skeletal
+
+In this file, we show that isomorphic objects in the index category are equal. This is accomplished
+by first showing that there are no injective functions `Fin (n + 1) → Fin n`. From this, it
+follows that for any morphism `f : m ⟶ n`, `Function.Injective f.toFun` implies `m ≤ n`.
+-/
 
 namespace CategoryTheory
 
@@ -59,27 +70,26 @@ theorem to_pred_fun_not_inj {m : ℕ} (f : Fin (m + 1) → Fin m) : ¬ Function.
         apply And.intro (Fin.eq_of_val_eq (h₁.trans h₂.right.symm))
         exact h₂.left.symm
 
-theorem le_of_inj_hom {m n : IndexCategory} (f : m ⟶ n) :
-    Function.Injective f.toFun → m.len ≤ n.len := by
+theorem le_of_inj_fun {m n : ℕ} (f : Fin m → Fin n) :
+    Function.Injective f → m ≤ n := by
   intro h
   induction m with
-  | zero => exact zero_len.le.trans (Nat.zero_le _)
+  | zero => exact Nat.zero_le _
   | succ m ih =>
-    simp
     apply Nat.succ_le_of_lt
-    let g : Fin (m.len + 1) ⟶ Fin n.len := f.toFun ∘ Fin.cast succ_len.symm
-    have hg : Function.Injective g := h.comp (Fin.cast_injective _)
-    specialize ih (Hom.mk (g ∘ Fin.castSucc))
-    specialize ih ((congr_arg Function.Injective (Hom.toFun_mk _)).mpr
-      (hg.comp (Fin.castSucc_injective _)))
+    specialize ih (f ∘ Fin.castSucc) (h.comp (Fin.castSucc_injective _))
     apply ih.lt_of_ne
     intro he
-    obtain rfl : m = n := ext _ _ he
-    exact to_pred_fun_not_inj g hg
+    obtain rfl : m = n := he
+    exact to_pred_fun_not_inj f h
+
+theorem le_of_toFun_inj {m n : IndexCategory} (f : m ⟶ n) :
+    Function.Injective f.toFun → m.len ≤ n.len :=
+  le_of_inj_fun f.toFun
 
 theorem eq_of_iso {m n : IndexCategory} (i : m ≅ n) : m = n :=
-  ext _ _ <| Nat.le_antisymm (le_of_inj_hom _ (iso_hom_toFun_injective i)) <|
-    le_of_inj_hom _ <| iso_inv_toFun_injective i
+  ext _ _ <| Nat.le_antisymm (le_of_toFun_inj _ (iso_hom_toFun_injective i)) <|
+    le_of_toFun_inj _ <| iso_inv_toFun_injective i
 
 theorem isSkeletal : Skeletal IndexCategory := fun _ _ h ↦ eq_of_iso h.some
 

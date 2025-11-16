@@ -1,11 +1,93 @@
+/-
+Copyright (c) 2025 Jonathan Konig. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Jonathan Konig
+-/
 import Mathlib.Data.Nat.Basic
 import Mathlib.Order.Basic
+import Mathlib.Data.Fin.Tuple.Basic
 import Mathlib.Logic.Relation
-import Mathlib.CategoryTheory.Category.Basic
 
 namespace Fin
 
 open Nat LT LE Relation
+
+section
+
+theorem fin_to_pred_not_inj {m : ℕ} (f : Fin (m + 1) → Fin m) : ¬ Function.Injective f := by
+  apply Function.not_injective_iff.mpr
+  induction m with
+  | zero => exact (f 0).elim0
+  | succ m ih =>
+    let j := Fin.find (fun i ↦ (f i.castSucc).val = m)
+    if hj : j = none then
+      have hlt : ∀ i : Fin (m + 1), (f i.castSucc).val < m :=
+        fun _ ↦ Nat.lt_of_le_of_ne (Nat.le_of_lt_succ (Fin.isLt _)) (Fin.find_eq_none_iff.mp hj _)
+      specialize ih fun i ↦ ⟨(f i.castSucc).val, hlt i⟩
+      apply ih.elim
+      intro i ih
+      apply ih.elim
+      intro i' ih
+      simp at ih
+      apply Exists.intro i.castSucc
+      apply Exists.intro i'.castSucc
+      apply And.intro (Fin.eq_of_val_eq ih.left)
+      apply Fin.ne_of_val_ne
+      simp
+      exact Fin.val_ne_of_ne ih.right
+    else
+      let hs₁ := Option.isSome_iff_ne_none.mpr (Ne.intro hj)
+      let i₁ : Fin (m + 2) := (Option.get _ hs₁).castSucc
+      let j' := Fin.find (fun i ↦ i ≠ i₁ ∧ (f i).val = m)
+      if hj' : j' = none then
+        have hlt : ∀ i : Fin (m + 2), i ≠ i₁ → (f i).val < m :=
+          fun _ h ↦ Nat.lt_of_le_of_ne (Nat.le_of_lt_succ (Fin.isLt _))
+            (not_and.mp (Fin.find_eq_none_iff.mp hj' _) h)
+        specialize ih fun i ↦ ⟨(f (i₁.succAbove i)).val, hlt _ (i₁.succAbove_ne _)⟩
+        apply ih.elim
+        intro i ih
+        apply ih.elim
+        intro i' ih
+        simp at ih
+        apply Exists.intro (i₁.succAbove i)
+        apply Exists.intro (i₁.succAbove i')
+        apply And.intro (Fin.eq_of_val_eq ih.left)
+        apply i₁.succAbove_right_inj.ne.mpr (Ne.intro ih.right)
+      else
+        have hs₂ := Option.isSome_iff_ne_none.mpr (Ne.intro hj')
+        let i₂ : Fin (m + 2) := Option.get _ hs₂
+        apply Exists.intro i₁
+        apply Exists.intro i₂
+        have h₁ : (f i₁).val = m := (Fin.find_eq_some_iff.mp (Option.some_get hs₁).symm).left
+        have h₂ : i₂ ≠ i₁ ∧ (f i₂).val = m :=
+          (Fin.find_eq_some_iff.mp (Option.some_get hs₂).symm).left
+        apply And.intro (Fin.eq_of_val_eq (h₁.trans h₂.right.symm))
+        exact h₂.left.symm
+
+theorem le_of_inj {m n : ℕ} (f : Fin m → Fin n) : Function.Injective f → m ≤ n := by
+  intro h
+  induction m with
+  | zero => exact Nat.zero_le _
+  | succ m ih =>
+    apply Nat.succ_le_of_lt
+    apply le.lt_of_ne <| (ih _  <| h.comp <| Fin.castSucc_injective _)
+    intro he
+    obtain rfl : m = n := he
+    exact fin_to_pred_not_inj f h
+
+theorem ge_of_surj {m n : ℕ} (f : Fin m → Fin n) : Function.Surjective f → n ≤ m := by
+  intro h
+  match n with
+  | 0 => exact Nat.zero_le _
+  | n + 1 =>
+    apply (Function.surjective_iff_hasRightInverse.mp h).elim
+    intro g hid
+    exact le_of_inj g (Function.injective_iff_hasLeftInverse.mpr (Exists.intro f hid))
+
+theorem eq_of_bij {m n : ℕ} (f : Fin m → Fin n) : Function.Bijective f → m = n :=
+  fun hf ↦ Nat.le_antisymm (le_of_inj _ hf.left) (ge_of_surj _ hf.right)
+
+end
 
 section
 
@@ -115,6 +197,218 @@ theorem splitOn_gt {α : Sort*} {h₁ : p.mapEq i j → α} {h₂ : p.mapLT i j 
   (dite_cond_eq_false (eq_false_intro (Fin.ne_of_gt h))).trans <|
     dite_cond_eq_false (eq_false_intro (Fin.not_lt.mpr (Fin.le_of_lt h)))
 
+instance mapEq_decideable : Decidable (p.mapEq i j) :=
+  by infer_instance
+
+instance mapEq_equivalence : Equivalence p.mapEq :=
+  ⟨fun _ ↦ rfl, Eq.symm, Eq.trans⟩
+
+end
+
+section
+
+theorem rep_eq_of_min {n : ℕ} (p : Partition n) (i : Fin n) (j : Fin p.size.val) :
+    p.map i = j → (∀ i' : Fin n, p.map i' = j → i ≤ i') → p.rep j = i :=
+  fun h₁ h₂ ↦ Fin.eq_of_val_eq <| Nat.le_antisymm (p.min _ _ h₁) (h₂ (p.rep j) (p.map_rep_id j))
+
+theorem le_rep {n : ℕ} (p : Partition n) (i : Fin p.size.val) :
+    i.val ≤ (p.rep i).val := by
+  cases i with
+  | mk i hi =>
+    induction i with
+    | zero => exact Nat.zero_le _
+    | succ i ih =>
+      apply Nat.succ_le_of_lt
+      apply Nat.lt_of_le_of_lt (ih ((Nat.lt_succ_self _).trans hi))
+      exact p.mono _ _ (Nat.lt_succ_self _)
+
+theorem map_le {n : ℕ} (p : Partition n) (i : Fin n) :
+    (p.map i).val ≤ i.val := by
+  apply Nat.le_of_not_lt
+  intro h₁
+  let j : Fin p.size.val := ⟨i.val, h₁.trans (p.map i).isLt⟩
+  exact Nat.not_le_of_lt (Nat.lt_of_lt_of_le (p.mono j _ h₁) (p.min _ _ rfl)) (p.le_rep j)
+
+theorem rep_map_id_iff_min {n : ℕ} (p : Partition n) (i : Fin n) :
+    p.rep (p.map i) = i ↔ ∀ j : Fin n, p.map j = p.map i → i ≤ j :=
+  ⟨fun h j he ↦ h.symm.le.trans (p.min j (p.map i) he), rep_eq_of_min _ _ _ rfl⟩
+
+theorem rep_lt_iff_lt {n : ℕ} (p : Partition n) {i j : Fin p.size.val} :
+    i < j ↔ p.rep i < p.rep j := by
+  apply Iff.intro (p.mono _ _)
+  intro h
+  apply Nat.lt_of_not_le
+  intro h₁
+  apply (Nat.lt_or_eq_of_le h₁).elim
+  · intro h₂
+    apply Nat.not_lt_of_gt h
+    exact p.mono _ _ h₂
+  · intro h₂
+    apply Nat.not_le_of_lt h
+    apply Nat.le_of_eq
+    apply Fin.val_eq_of_eq
+    exact congr_arg _ (Fin.eq_of_val_eq h₂)
+
+theorem rep_le_iff_le {n : ℕ} (p : Partition n) {i j : Fin p.size.val} :
+    i ≤ j ↔ p.rep i ≤ p.rep j := by
+  constructor
+  · intro h
+    apply (Nat.lt_or_eq_of_le h).elim
+    · intro h
+      exact (p.mono _ _ h).le
+    · intro h
+      apply Nat.le_of_eq
+      apply Fin.val_eq_of_eq
+      exact congr_arg _ (Fin.eq_of_val_eq h)
+  · intro h
+    apply (Nat.lt_or_eq_of_le h).elim
+    · intro h
+      apply Nat.le_of_lt
+      exact p.rep_lt_iff_lt.mpr h
+    · intro h
+      apply Nat.le_of_eq
+      apply Fin.val_eq_of_eq
+      apply p.rep_inj
+      exact Fin.eq_of_val_eq h
+
+theorem rep_succ_le_iff_rep_lt {n : ℕ} (p : Partition n) (i : ℕ) (hi : i + 1 < p.size.val)
+  (j : Fin p.size.val) :
+    p.rep ⟨i + 1, hi⟩ ≤ p.rep j ↔ p.rep ⟨i, (Nat.lt_succ_self _).trans hi⟩ < p.rep j :=
+  p.rep_le_iff_le.symm.trans <| Nat.succ_le_iff.trans <|
+    @p.rep_lt_iff_lt _ ⟨i, (Nat.lt_succ_self _).trans hi⟩ j
+
+theorem rep_lt_of_rep_succ_le {n : ℕ} (p : Partition n) (i : ℕ) (hi : i + 1 < p.size.val)
+    (j : Fin n) : p.rep ⟨i + 1, hi⟩ ≤ j → p.rep ⟨i, (Nat.lt_succ_self _).trans hi⟩ < j :=
+  (p.mono _ _ (Nat.lt_succ_self i)).trans_le
+
+theorem rep_succ_le_of_rep_lt {n : ℕ} (p : Partition n) (i : ℕ) (hi : i + 1 < p.size.val)
+    (j : Fin n) :
+    p.rep ⟨i, (Nat.lt_succ_self _).trans hi⟩ < j → p.rep (p.map j) = j → p.rep ⟨i + 1, hi⟩ ≤ j := by
+  intro h₁ h₂
+  rw [<-h₂]
+  apply (p.rep_succ_le_iff_rep_lt i hi (p.map j)).mpr
+  exact h₁.trans_eq h₂.symm
+
+theorem map'_rep_inj_of_mapEq {n : ℕ} (p p' : Partition n)
+    (h : ∀ i j : Fin n, p.mapEq i j ↔ p'.mapEq i j) :
+    Function.Injective (p'.map ∘ p.rep) := by
+  intro i j
+  simp
+  intro he
+  replace he := (h (p.rep i) (p.rep j)).mpr he
+  unfold mapEq at he
+  simp at he
+  exact he
+
+theorem map_rep'_inj_of_mapEq {n : ℕ} (p p' : Partition n)
+    (h : ∀ i j : Fin n, p.mapEq i j ↔ p'.mapEq i j) :
+    Function.Injective (p.map ∘ p'.rep) := by
+  intro i j
+  simp
+  intro he
+  replace he := (h (p'.rep i) (p'.rep j)).mp he
+  unfold mapEq at he
+  simp at he
+  exact he
+
+theorem size_eq_of_mapEq {n : ℕ} (p p' : Partition n)
+    (h : ∀ i j : Fin n, p.mapEq i j ↔ p'.mapEq i j) : p.size.val = p'.size.val :=
+  Nat.le_antisymm (le_of_inj _ (map'_rep_inj_of_mapEq _ _ h)) <|
+    le_of_inj _ (map_rep'_inj_of_mapEq _ _ h)
+
+theorem map_zero_eq_zero {n : ℕ} (p : Partition n) {i : Fin n} (h : i.val = 0) :
+    p.map i = ⟨0, Nat.zero_lt_of_lt (p.map i).isLt⟩ :=
+  Fin.eq_of_val_eq <| Nat.eq_zero_of_le_zero <| (p.map_le _).trans_eq h
+
+theorem rep_zero_eq_zero {n : ℕ} (p : Partition n) {i : Fin p.size.val} (h : i.val = 0) :
+    p.rep i = ⟨0, (h.symm.le.trans_lt i.isLt).trans_le (Nat.le_of_lt_succ p.size.isLt)⟩ := by
+  apply p.rep_eq_of_min _ _ ((p.map_zero_eq_zero rfl).trans (Fin.eq_of_val_eq h.symm))
+  intro _ _
+  exact Nat.zero_le _
+
+theorem rep_map_inv_of_mapEq {n : ℕ} (p p' : Partition n)
+    (h : ∀ i j : Fin n, p.mapEq i j ↔ p'.mapEq i j) :
+    ∀ (i : Fin n), p.rep (p.map i) = p'.rep (p'.map i) := by
+  match n with
+  | 0 => exact fun i ↦ i.elim0
+  | n + 1 =>
+    intro i
+    induction i with
+    | mk i hi =>
+      induction i using Nat.strongRec with
+      | ind i ih =>
+        if h₁ : p.rep (p.map ⟨i, hi⟩) = ⟨i, hi⟩ then
+          have h₂ := (p.rep_map_id_iff_min ⟨i, hi⟩).mp h₁
+          have h₃ : ∀ j, p'.map j = p'.map ⟨i, hi⟩ → i ≤ j.val :=
+          fun j he ↦ h₂ j <| (h _ _).mpr he
+          exact h₁.trans ((p'.rep_map_id_iff_min ⟨i, hi⟩).mpr h₃).symm
+        else
+          have h₂ := (p.rep_map_id_iff_min ⟨i, hi⟩).not.mp h₁
+          apply (Decidable.exists_not_of_not_forall h₂).elim
+          intro j
+          simp
+          intro h₃ h₄
+          have h₅ : p'.map j = p'.map ⟨i, hi⟩ := (h _ _).mp h₃
+          rw [<-h₃, <-h₅]
+          exact ih j.val h₄ (Nat.lt_trans h₄ hi)
+
+theorem rep_comm_inj_of_mapEq {n : ℕ} (p p' : Partition n)
+    (h : ∀ i j : Fin n, p.mapEq i j ↔ p'.mapEq i j) :
+    ∀ (j : Fin p.size.val) (j' : Fin p'.size.val), p.rep j = p'.rep j' → j.val = j'.val := by
+  intro j
+  induction j with
+  | mk j h₁ =>
+    induction j with
+    | zero =>
+      intro j'
+      simp [rep_zero_eq_zero]
+      intro h₂
+      apply @Fin.val_eq_of_eq _ ⟨0, h₁.trans_eq (size_eq_of_mapEq _ _ h)⟩
+      apply p'.rep_inj
+      simp [rep_zero_eq_zero, h₂]
+    | succ j ih =>
+      intro j' h₂
+      apply @Fin.val_eq_of_eq _ ⟨_, h₁.trans_eq (size_eq_of_mapEq _ _ h)⟩
+      have h₃ := p.rep_lt_of_rep_succ_le j h₁ _ h₂.le
+      have h₄ : 0 < j'.val := by
+        apply Nat.lt_of_not_le
+        intro h₄
+        replace h₄ : j'.val = 0 := Nat.eq_zero_of_le_zero h₄
+        exact Nat.not_lt_zero _ (h₃.trans_eq (p'.rep_zero_eq_zero h₄))
+      let k : Fin p'.size.val := ⟨j'.val - 1, (Nat.pred_le _).trans_lt j'.isLt⟩
+      have hk : j' = ⟨k.val + 1, (Nat.sub_add_cancel (Nat.one_le_of_lt h₄)).le.trans_lt j'.isLt⟩ :=
+        Fin.eq_of_val_eq (Nat.sub_add_cancel (Nat.one_le_of_lt h₄)).symm
+      rw [hk]
+      apply Fin.eq_of_val_eq
+      simp
+      rw [hk] at h₂
+      have h₅ :=
+        p'.rep_lt_of_rep_succ_le k ((Fin.val_eq_of_eq hk.symm).le.trans_lt j'.isLt) _ h₂.symm.le
+      rw [hk] at h₃
+      apply ih ((Nat.lt_succ_self _).trans h₁) k
+      apply Fin.eq_of_val_eq
+      apply Nat.le_antisymm
+      · apply Nat.le_of_not_lt
+        intro h₆
+        have h₇ := p'.rep_succ_le_of_rep_lt k.val ((Fin.val_eq_of_eq hk.symm).le.trans_lt j'.isLt)
+          (p.rep ⟨j, (Nat.lt_succ_self _).trans h₁⟩) h₆ (by simp [<- rep_map_inv_of_mapEq _ _ h])
+        apply Nat.not_le_of_lt (h₃.trans_le h₇)
+        exact Nat.le_refl _
+      · apply Nat.le_of_not_lt
+        intro h₆
+        have h₇ := p.rep_succ_le_of_rep_lt j h₁ (p'.rep k) h₆ (by simp [rep_map_inv_of_mapEq _ _ h])
+        apply Nat.not_le_of_lt (h₅.trans_le h₇)
+        exact Nat.le_refl _
+
+theorem map_eq_of_mapEq {n : ℕ} (p p' : Partition n)
+    (h : ∀ i j : Fin n, p.mapEq i j ↔ p'.mapEq i j) :
+    ∀ i : Fin n, (p.map i).val = (p'.map i).val :=
+  fun _ ↦ rep_comm_inj_of_mapEq _ _ h _ _ <| rep_map_inv_of_mapEq _ _ h _
+
+theorem mapEq_ext {n : ℕ} (p p' : Partition n) (h : ∀ i j : Fin n, p.mapEq i j ↔ p'.mapEq i j) :
+    p = p' :=
+  Partition.ext _ _ (size_eq_of_mapEq _ _ h) <| map_eq_of_mapEq _ _ h
+
 end
 
 section
@@ -180,7 +474,7 @@ def mergeLT_size : Fin (n + 1) :=
   ⟨p.size.val - 1, (Nat.pred_le _).trans_lt p.size.isLt⟩
 
 def mergeLT_fin_of_lt (i : Fin n) {j : Fin n} (h : p.mapLT i j) : Fin p.mergeLT_size.val :=
-  ⟨(p.map i).val, h.trans_le (Nat.le_pred_of_lt (p.map j).isLt)⟩
+  ⟨(p.map i).val, Nat.lt_of_lt_of_le h (Nat.le_pred_of_lt (p.map j).isLt)⟩
 
 def mergeLT_fin_of_gt (i : Fin n) {j : Fin n} (h : p.mapGT i j) : Fin p.mergeLT_size.val :=
   ⟨(p.map i).val - 1, Nat.pred_lt_pred (Nat.ne_zero_of_lt h) (p.map i).isLt⟩
@@ -236,7 +530,7 @@ theorem mergeLT_map_eq_lower_iff_eq_or_eq (h : p.mapLT l u) (i : Fin n) :
       apply iff_self_or.mpr fun he ↦ False.elim (Fin.ne_of_lt h' he)
     · intro h'
       simp [Fin.ne_of_gt h', Fin.ne_of_gt (Fin.lt_trans h h'), h']
-      exact Nat.ne_of_lt' (h.trans_le (Nat.le_pred_of_lt h'))
+      exact Nat.ne_of_lt' (Nat.lt_of_lt_of_le h (Nat.le_pred_of_lt h'))
 
 theorem mergeLT_map_lt_upper_iff_eq_or_lt (h : p.mapLT l u) (i : Fin n) :
     (p.mergeLT_map h i).val < (p.map u).val ↔ p.mapEq i u ∨ p.mapLT i u
@@ -247,7 +541,6 @@ theorem mergeLT_map_lt_upper_iff_eq_or_lt (h : p.mapLT l u) (i : Fin n) :
       exact h
     · intro h'
       simp [p.mergeLT_map_of_lt _ _ h', Fin.ne_of_lt h']
-      exact Fin.lt_iff_val_lt_val
     · intro h'
       simp [p.mergeLT_map_of_gt _ _ h', Fin.ne_of_gt h']
       simp [Fin.not_lt.mpr (Fin.le_of_lt h')]
@@ -393,13 +686,13 @@ theorem mergeLT_mono (h : p.mapLT l u) (i j : Fin p.mergeLT_size.val) :
   := by
     intro h₁
     if h₂ : j.val < (p.map u).val then
-      simp [mergeLT_rep, h₁.trans h₂, h₂]
+      simp [mergeLT_rep, Nat.lt_trans h₁ h₂, h₂]
       exact p.mono _ _ h₁
     else
       if h₃ : i.val < (p.map u).val then
         simp [mergeLT_rep, h₂, h₃]
         apply p.mono
-        exact h₁.trans (Nat.lt_succ_self _)
+        exact Nat.lt_trans h₁ (Nat.lt_succ_self _)
       else
         simp [mergeLT_rep, h₂, h₃]
         exact p.mono _ _ (Nat.add_lt_add_right h₁ _)
@@ -589,8 +882,7 @@ end
 
 section
 
-variable {n : ℕ} (p : Partition n)
-variable (r : Fin n → Fin n → Prop) [∀ i j : Fin n, Decidable (r i j)]
+variable {n : ℕ} (r : Fin n → Fin n → Prop) [∀ i j : Fin n, Decidable (r i j)]
 
 def of_relation : Partition n := (id n).conditional_merge_rec₁ r n (lt_succ_self n)
 
@@ -606,6 +898,61 @@ theorem of_relation_eqvGen_exact : (of_relation r).exact (EqvGen r) :=
 
 theorem of_relation_iff_eqvGen : ∀ i j : Fin n, (of_relation r).mapEq i j ↔ EqvGen r i j :=
   fun i j ↦ ⟨of_relation_eqvGen_sound r i j, of_relation_eqvGen_exact r i j⟩
+
+theorem of_relation_unique (p : Partition n) (h : ∀ i j : Fin n, p.mapEq i j ↔ EqvGen r i j) :
+    p = of_relation r :=
+  mapEq_ext _ _ <| fun i j ↦ (h i j).trans (of_relation_iff_eqvGen r i j).symm
+
+end
+
+section
+
+variable {n : ℕ} (p : Partition n)
+
+variable (r : Fin n → Fin n → Prop) (h : ∀ i j : Fin n, p.mapEq i j ↔ r i j)
+
+instance rel_decideable_of_partition (i j : Fin n) : Decidable (r i j) :=
+  decidable_of_decidable_of_iff (h i j)
+
+/-
+Todo: construct an object of `Partition n` given only:
+- size : `Fin (n + 1)`
+- map : `Fin n → Fin size.val`
+- rep : `Fin size.val → Fin n`
+- rinv : `map ∘ rep = id`
+By first updating the choice of representative to be the minimum over all values related
+to the existing choice, then swapping the images of classes as necessary to ensure the
+monotonicity requirement is satisfied.
+
+Todo: construct an object of `Partition n` given only:
+- map : `Fin n → Fin m`
+- surj : `Function.Surjective map`
+For an arbitrary `m` which is guarnateed to be less than `n + 1` by surjectivity.
+
+Todo: establish that a relation on `Fin n` is decideable if it is identified by a
+surjective map of `Fin`'s. (The converse implication has already been established.)
+-/
+
+end
+
+section
+
+/-- The isomorphism between partitions and decideable equivalence relations. -/
+
+theorem of_relation_mapEq_eq_eqvGen {n : ℕ} (r : Fin n → Fin n → Prop)
+    [∀ i j : Fin n, Decidable (r i j)] : (of_relation r).mapEq = EqvGen r :=
+  funext₂ <| fun _ _ ↦ propext <| of_relation_iff_eqvGen _ _ _
+
+theorem of_eqv_relation_mapEq_id {n : ℕ} {r : Fin n → Fin n → Prop}
+    (h : Equivalence r) [∀ i j : Fin n, Decidable (r i j)] : (of_relation r).mapEq = r :=
+  (of_relation_mapEq_eq_eqvGen r).trans <| Equivalence.eqvGen_eq h
+
+theorem mapEq_to_relation_id {n : ℕ} (p : Partition n) : of_relation p.mapEq = p := by
+  apply mapEq_ext
+  intro i j
+  apply Iff.intro _ (of_relation_exact p.mapEq i j)
+  intro h
+  exact Equivalence.eqvGen_eq p.mapEq_equivalence ▸ (of_relation_iff_eqvGen p.mapEq i j).mp h
 
 end
 

@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2025 Jonathan Konig. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Jonathan Konig
+-/
 import Mathlib.Data.Nat.Basic
 import Mathlib.Order.Basic
 import Mathlib.CategoryTheory.IndexCategory.Coproducts
@@ -114,10 +119,8 @@ theorem cur_ext {m n k : IndexCategory} (f g : k ⟶ n ^ m) :
 def expFunc (m : IndexCategory) : IndexCategory ⥤ IndexCategory where
   obj n := n ^ m
   map f := cur (eval ≫ f)
-  map_id n :=
-    (cur_uniq (by simp)).symm
-  map_comp f g :=
-    (cur_uniq (by rw [comp_prod_id, Category.assoc] ; simp)).symm
+  map_id n := (cur_uniq (by simp)).symm
+  map_comp f g := (cur_uniq (by rw [comp_prod_id, Category.assoc] ; simp)).symm
 
 end Exponentials
 
