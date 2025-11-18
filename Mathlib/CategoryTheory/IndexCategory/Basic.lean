@@ -186,10 +186,12 @@ protected def cases {F : IndexCategory → Sort*} (zero : F zero) (succ : ∀ n,
     ∀ n, F n :=
   IndexCategory.rec <| fun | 0 => zero | n + 1 => mk_succ ▸ succ (mk n)
 
+@[simp]
 protected theorem cases_zero {F : IndexCategory → Sort*} (zero : F zero) (succ : ∀ n, F (n + one)) :
     IndexCategory.cases zero succ IndexCategory.zero = zero :=
   heq_iff_eq.mp <| (IndexCategory.rec_heq _ _).trans <| by rw [zero_len]
 
+@[simp]
 protected theorem cases_succ {F : IndexCategory → Sort*} (zero : F zero) (succ : ∀ n, F (n + one))
     (n : IndexCategory) : IndexCategory.cases zero succ (n + one) = succ n := by
   apply IndexCategory.recOn n
