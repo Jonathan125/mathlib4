@@ -51,7 +51,7 @@ protected def partition : Partition n.len :=
   Partition.of_relation (Coequalizer.relation f g)
 
 protected def obj : IndexCategory :=
-  mk (Coequalizer.partition f g).size.val
+  mk (Coequalizer.partition f g).size
 
 protected def hom : n ⟶ Coequalizer.obj f g :=
   Hom.mk <| Fin.cast (len_mk _).symm ∘ (Coequalizer.partition f g).map
