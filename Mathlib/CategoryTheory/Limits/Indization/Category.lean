@@ -3,11 +3,14 @@ Copyright (c) 2024 Markus Himmel. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
-import Mathlib.CategoryTheory.Limits.Constructions.Filtered
-import Mathlib.CategoryTheory.Limits.FullSubcategory
-import Mathlib.CategoryTheory.Limits.ExactFunctor
-import Mathlib.CategoryTheory.Limits.Indization.Equalizers
-import Mathlib.CategoryTheory.Limits.Indization.LocallySmall
+module
+
+public import Mathlib.CategoryTheory.Functor.Flat
+public import Mathlib.CategoryTheory.Limits.Constructions.Filtered
+public import Mathlib.CategoryTheory.Limits.ExactFunctor
+public import Mathlib.CategoryTheory.Limits.Indization.Equalizers
+public import Mathlib.CategoryTheory.Limits.Indization.LocallySmall
+
 import Mathlib.CategoryTheory.Limits.Indization.Products
 import Mathlib.CategoryTheory.Limits.Preserves.Presheaf
 
@@ -53,11 +56,13 @@ Note that:
 * [M. Kashiwara, P. Schapira, *Categories and Sheaves*][Kashiwara2006], Chapter 6
 -/
 
+@[expose] public section
+
 universe w v u
 
 namespace CategoryTheory
 
-open Limits Functor
+open Limits CategoryTheory.Functor
 
 variable {C : Type u} [Category.{v} C]
 
@@ -155,7 +160,7 @@ instance [HasLimitsOfShape WalkingParallelPair C] :
 
 noncomputable instance [HasFiniteLimits C] : CreatesFiniteLimits (Ind.inclusion C) :=
   letI _ : CreatesFiniteProducts (Ind.inclusion C) :=
-    { creates _ _ := createsLimitsOfShapeOfEquiv (Discrete.equivalence Equiv.ulift) _  }
+    { creates _ _ := createsLimitsOfShapeOfEquiv (Discrete.equivalence Equiv.ulift) _ }
   createsFiniteLimitsOfCreatesEqualizersAndFiniteProducts (Ind.inclusion C)
 
 instance [HasFiniteLimits C] : HasFiniteLimits (Ind C) :=
@@ -280,6 +285,7 @@ instance [HasColimitsOfShape WalkingParallelPair C] :
 instance [HasFiniteColimits C] : HasColimits (Ind C) :=
   has_colimits_of_hasCoequalizers_and_coproducts
 
+set_option backward.isDefEq.respectTransparency.types false in
 /-- A way to understand morphisms in `Ind C`: every morphism is induced by a natural transformation
 of diagrams. -/
 theorem Ind.exists_nonempty_arrow_mk_iso_ind_lim {A B : Ind C} {f : A ⟶ B} :
@@ -290,7 +296,7 @@ theorem Ind.exists_nonempty_arrow_mk_iso_ind_lim {A B : Ind C} {f : A ⟶ B} :
   refine ⟨P.I, inferInstance, inferInstance, P.F₁, P.F₂, P.φ, ⟨Arrow.isoMk ?_ ?_ ?_⟩⟩
   · exact P.parallelPairIsoParallelPairCompIndYoneda.app WalkingParallelPair.zero
   · exact P.parallelPairIsoParallelPairCompIndYoneda.app WalkingParallelPair.one
-  · simpa using
+  · simpa using!
       (P.parallelPairIsoParallelPairCompIndYoneda.hom.naturality WalkingParallelPairHom.left).symm
 
 section Small

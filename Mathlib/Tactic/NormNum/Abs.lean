@@ -3,15 +3,21 @@ Copyright (c) 2025 David Renshaw. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: David Renshaw
 -/
-import Mathlib.Tactic.NormNum.Basic
-import Mathlib.Data.Nat.Cast.Order.Ring
+module
 
+public import Mathlib.Data.Nat.Cast.Order.Ring
+public import Mathlib.Tactic.NormNum.Basic
+
+set_option doc.verso true
+set_option doc.verso.suggestions false
 
 /-!
 # `norm_num` plugin for `abs`
 
 TODO: plugins for `mabs`, `norm`, `nnorm`, and `enorm`.
 -/
+
+public meta section
 
 namespace Mathlib.Meta.NormNum
 

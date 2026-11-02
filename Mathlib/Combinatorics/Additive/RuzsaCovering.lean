@@ -3,11 +3,16 @@ Copyright (c) 2022 Yaël Dillies. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yaël Dillies
 -/
-import Mathlib.Algebra.Group.Action.Pointwise.Finset
-import Mathlib.Data.Real.Basic
-import Mathlib.Order.Preorder.Finite
-import Mathlib.SetTheory.Cardinal.Finite
+module
+
+public import Mathlib.Algebra.Group.Action.Pointwise.Finset
+public import Mathlib.Basic.Real.Basic
+public import Mathlib.SetTheory.Cardinal.Finite
+
 import Mathlib.Tactic.Positivity.Finset
+
+set_option doc.verso true
+set_option doc.verso.suggestions false
 
 /-!
 # Ruzsa's covering lemma
@@ -15,6 +20,8 @@ import Mathlib.Tactic.Positivity.Finset
 This file proves the Ruzsa covering lemma. This says that, for `A`, `B` finsets, we can cover `A`
 with at most `#(A + B) / #B` copies of `B - B`.
 -/
+
+public section
 
 open scoped Pointwise
 
@@ -27,7 +34,7 @@ variable [DecidableEq G] {A B : Finset G}
 @[to_additive /-- **Ruzsa's covering lemma** -/]
 theorem ruzsa_covering_mul (hB : B.Nonempty) (hK : #(A * B) ≤ K * #B) :
     ∃ F ⊆ A, #F ≤ K ∧ A ⊆ F * (B / B) := by
-  haveI : ∀ F, Decidable ((F : Set G).PairwiseDisjoint (· • B)) := fun F ↦ Classical.dec _
+  have : ∀ F, Decidable ((F : Set G).PairwiseDisjoint (· • B)) := fun F ↦ Classical.dec _
   set C := {F ∈ A.powerset | (SetLike.coe F).PairwiseDisjoint (· • B)}
   obtain ⟨F, hFmax⟩ := C.exists_maximal <| filter_nonempty_iff.2
     ⟨∅, empty_mem_powerset _, by simp [coe_empty]⟩

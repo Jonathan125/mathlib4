@@ -3,10 +3,13 @@ Copyright (c) 2018 Kenny Lau. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Johannes Hölzl, Kenny Lau
 -/
+module
+
+public import Mathlib.Algebra.Group.Submonoid.Membership
+public import Mathlib.Data.DFinsupp.BigOperators
+public import Mathlib.Order.ConditionallyCompleteLattice.Basic
+
 import Mathlib.Algebra.Group.Submonoid.BigOperators
-import Mathlib.Algebra.Group.Submonoid.Membership
-import Mathlib.Data.DFinsupp.BigOperators
-import Mathlib.Order.ConditionallyCompleteLattice.Basic
 
 /-!
 # `DFinsupp` and submonoids
@@ -21,10 +24,12 @@ This file mainly concerns the interaction between submonoids and products/sums o
   monoids can be given by taking finite sums of elements of each monoid.
 -/
 
+public section
+
 
 universe u u₁ u₂ v v₁ v₂ v₃ w x y l
 
-variable {ι : Type u} {γ : Type w} {β : ι → Type v} {β₁ : ι → Type v₁} {β₂ : ι → Type v₂}
+variable {ι : Type u} {γ : Type w} {β : ι → Type v}
 
 open DFinsupp
 

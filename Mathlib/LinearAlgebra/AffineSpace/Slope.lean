@@ -3,10 +3,17 @@ Copyright (c) 2020 Yury Kudryashov. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yury Kudryashov
 -/
-import Mathlib.LinearAlgebra.AffineSpace.AffineMap
+module
+
+public import Mathlib.LinearAlgebra.AffineSpace.AffineMap
+public import Mathlib.Tactic.FieldSimp
+public import Mathlib.Tactic.Module
+
+import Mathlib.Algebra.NoZeroSMulDivisors.Basic
 import Mathlib.Tactic.Field
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Module
+
+set_option doc.verso true
+set_option doc.verso.suggestions false
 
 /-!
 # Slope of a function
@@ -20,6 +27,8 @@ interval is convex on this interval.
 
 affine space, slope
 -/
+
+@[expose] public section
 
 open AffineMap
 
@@ -70,7 +79,7 @@ theorem eq_of_slope_eq_zero {f : k → PE} {a b : k} (h : slope f a b = (0 : E))
 
 theorem AffineMap.slope_comp {F PF : Type*} [AddCommGroup F] [Module k F] [AddTorsor F PF]
     (f : PE →ᵃ[k] PF) (g : k → PE) (a b : k) : slope (f ∘ g) a b = f.linear (slope g a b) := by
-  simp only [slope, (· ∘ ·), f.linear.map_smul, f.linearMap_vsub]
+  simp only [slope, (· ∘ ·), f.linear.map_smul, f.linear_apply_vsub]
 
 theorem LinearMap.slope_comp {F : Type*} [AddCommGroup F] [Module k F] (f : E →ₗ[k] F) (g : k → E)
     (a b : k) : slope (f ∘ g) a b = f (slope g a b) :=
@@ -150,7 +159,7 @@ lemma slope_nonpos_iff_of_le (hxy : x ≤ y) : slope f x y ≤ 0 ↔ f y ≤ f x
   simpa using slope_nonneg_iff_of_le (f := -f) hxy
 
 lemma AntitoneOn.slope_nonpos {s : Set k} (hf : AntitoneOn f s) (hx : x ∈ s) (hy : y ∈ s) :
-    slope f x y ≤ 0:= by
+    slope f x y ≤ 0 := by
   simpa using hf.neg.slope_nonneg hx hy
 
 lemma slope_pos_iff_of_le (hxy : x ≤ y) : 0 < slope f x y ↔ f x < f y := by
@@ -166,7 +175,7 @@ lemma slope_neg_iff_of_le (hxy : x ≤ y) : slope f x y < 0 ↔ f y < f x := by
   simpa using slope_pos_iff_of_le (f := -f) hxy
 
 lemma StrictAntiOn.slope_neg {s : Set k} (hf : StrictAntiOn f s) (hx : x ∈ s) (hy : y ∈ s)
-    (hxy : x ≠ y) : slope f x y < 0:= by
+    (hxy : x ≠ y) : slope f x y < 0 := by
   simpa using hf.neg.slope_pos hx hy hxy
 
 end Order

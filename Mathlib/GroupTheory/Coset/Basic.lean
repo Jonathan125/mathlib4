@@ -3,10 +3,12 @@ Copyright (c) 2018 Mitchell Rowett. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Mitchell Rowett, Kim Morrison
 -/
-import Mathlib.Algebra.Group.Action.Pointwise.Set.Basic
-import Mathlib.Algebra.Group.Subgroup.Basic
-import Mathlib.Data.Setoid.Basic
-import Mathlib.GroupTheory.Coset.Defs
+module
+
+public import Mathlib.Algebra.Group.Action.Pointwise.Set.Basic
+public import Mathlib.Algebra.Group.Subgroup.Basic
+public import Mathlib.GroupTheory.Coset.Defs
+public import Mathlib.Order.Setoid.Basic
 
 /-!
 # Cosets
@@ -15,11 +17,13 @@ This file develops the basic theory of left and right cosets.
 
 When `G` is a group and `a : G`, `s : Set G`, with  `open scoped Pointwise` we can write:
 * the left coset of `s` by `a` as `a • s`
-* the right coset of `s` by `a` as `MulOpposite.op a • s` (or `op a • s` with `open MulOpposite`)
+* the right coset of `s` by `a` as `MulOpposite.op a • s` (or `op a • s` with `open MulOpposite`,
+  or `s <• a` with `open scoped Pointwise RightActions`)
 
 If instead `G` is an additive group, we can write (with  `open scoped Pointwise` still)
 * the left coset of `s` by `a` as `a +ᵥ s`
-* the right coset of `s` by `a` as `AddOpposite.op a +ᵥ s` (or `op a • s` with `open AddOpposite`)
+* the right coset of `s` by `a` as `AddOpposite.op a +ᵥ s` (or `op a +ᵥ s` with `open AddOpposite`,
+  or `s <+ᵥ a` with `open scoped Pointwise RightActions`)
 
 ## Main definitions
 
@@ -34,6 +38,8 @@ If instead `G` is an additive group, we can write (with  `open scoped Pointwise`
 
 Properly merge with pointwise actions on sets, by renaming and deduplicating lemmas as appropriate.
 -/
+
+@[expose] public section
 
 assert_not_exists Cardinal Multiset
 
@@ -138,11 +144,11 @@ variable [Group α] {s : Set α} {x : α}
 
 @[to_additive mem_leftAddCoset_iff]
 theorem mem_leftCoset_iff (a : α) : x ∈ a • s ↔ a⁻¹ * x ∈ s :=
-  Iff.intro (fun ⟨b, hb, Eq⟩ => by simp [Eq.symm, hb]) fun h => ⟨a⁻¹ * x, h, by simp⟩
+  Iff.intro (fun ⟨b, hb, h⟩ => by simp [h.symm, hb]) fun h => ⟨a⁻¹ * x, h, by simp⟩
 
 @[to_additive mem_rightAddCoset_iff]
 theorem mem_rightCoset_iff (a : α) : x ∈ op a • s ↔ x * a⁻¹ ∈ s :=
-  Iff.intro (fun ⟨b, hb, Eq⟩ => by simp [Eq.symm, hb]) fun h => ⟨x * a⁻¹, h, by simp⟩
+  Iff.intro (fun ⟨b, hb, h⟩ => by simp [h.symm, hb]) fun h => ⟨x * a⁻¹, h, by simp⟩
 
 end CosetGroup
 
@@ -279,8 +285,8 @@ theorem strictMono_comap_prod_image :
   refine fun t₁ t₂ h ↦ ⟨⟨Subgroup.comap_mono h.1, Set.image_mono h.1⟩,
     mt (fun ⟨le1, le2⟩ a ha ↦ ?_) h.2⟩
   obtain ⟨a', h', eq⟩ := le2 ⟨_, ha, rfl⟩
-  convert ← t₁.mul_mem h' (@le1 ⟨_, QuotientGroup.eq.1 eq⟩ <| t₂.mul_mem (t₂.inv_mem <| h.1 h') ha)
-  apply mul_inv_cancel_left
+  convert t₁.mul_mem h' (@le1 ⟨_, QuotientGroup.eq.1 eq⟩ <| t₂.mul_mem (t₂.inv_mem <| h.1 h') ha)
+  simp
 
 variable {s} {a b : α}
 
@@ -288,7 +294,7 @@ variable {s} {a b : α}
 theorem eq_class_eq_leftCoset (s : Subgroup α) (g : α) :
     { x : α | (x : α ⧸ s) = g } = g • s :=
   Set.ext fun z => by
-    rw [mem_leftCoset_iff, Set.mem_setOf_eq, eq_comm, QuotientGroup.eq, SetLike.mem_coe]
+    rw [mem_leftCoset_iff, Set.mem_ofPred_eq, eq_comm, QuotientGroup.eq, SetLike.mem_coe]
 
 open MulAction in
 @[to_additive]
@@ -314,17 +320,17 @@ variable [Group α] {s : Subgroup α}
 @[to_additive /-- The natural bijection between the cosets `g + s` and `s`. -/]
 def leftCosetEquivSubgroup (g : α) : (g • s : Set α) ≃ s :=
   ⟨fun x => ⟨g⁻¹ * x.1, (mem_leftCoset_iff _).1 x.2⟩, fun x => ⟨g * x.1, x.1, x.2, rfl⟩,
-    fun ⟨x, _⟩ => Subtype.eq <| by simp, fun ⟨g, _⟩ => Subtype.eq <| by simp⟩
+    fun ⟨x, _⟩ => Subtype.ext <| by simp, fun ⟨g, _⟩ => Subtype.ext <| by simp⟩
 
 /-- The natural bijection between a right coset `s * g` and `s`. -/
 @[to_additive /-- The natural bijection between the cosets `s + g` and `s`. -/]
 def rightCosetEquivSubgroup (g : α) : (op g • s : Set α) ≃ s :=
   ⟨fun x => ⟨x.1 * g⁻¹, (mem_rightCoset_iff _).1 x.2⟩, fun x => ⟨x.1 * g, x.1, x.2, rfl⟩,
-    fun ⟨x, _⟩ => Subtype.eq <| by simp, fun ⟨g, _⟩ => Subtype.eq <| by simp⟩
+    fun ⟨x, _⟩ => Subtype.ext <| by simp, fun ⟨g, _⟩ => Subtype.ext <| by simp⟩
 
 /-- A (non-canonical) bijection between a group `α` and the product `(α/s) × s` -/
 @[to_additive addGroupEquivQuotientProdAddSubgroup
-  /-- A (non-canonical) bijection between an add_group `α` and the product `(α/s) × s` -/]
+  /-- A (non-canonical) bijection between an `AddGroup` `α` and the product `(α/s) × s` -/]
 noncomputable def groupEquivQuotientProdSubgroup : α ≃ (α ⧸ s) × s :=
   calc
     α ≃ Σ L : α ⧸ s, { x : α // (x : α ⧸ s) = L } := (Equiv.sigmaFiberEquiv QuotientGroup.mk).symm
@@ -355,12 +361,11 @@ def quotientEquivProdOfLE' (h_le : s ≤ t) (f : α ⧸ t → α)
         rw [leftRel_apply]
         change ((f b)⁻¹ * b)⁻¹ * ((f c)⁻¹ * c) ∈ s
         have key : f b = f c :=
-          congr_arg f (Quotient.sound' (leftRel_apply.mpr (h_le (leftRel_apply.mp h))))
+          congr(f $(Quotient.sound' (leftRel_apply.mpr (h_le (leftRel_apply.mp h)))))
         rwa [key, mul_inv_rev, inv_inv, mul_assoc, mul_inv_cancel_left, ← leftRel_apply]⟩
   invFun a := by
     refine a.2.map' (fun (b : { x // x ∈ t}) => f a.1 * b) fun b c h => by
       rw [leftRel_apply] at h ⊢
-      change (f a.1 * b)⁻¹ * (f a.1 * c) ∈ s
       rwa [mul_inv_rev, mul_assoc, inv_mul_cancel_left]
   left_inv := by
     refine Quotient.ind' fun a => ?_
@@ -393,7 +398,7 @@ def quotientSubgroupOfEmbeddingOfLE (H : Subgroup α) (h : s ≤ t) :
   inj' :=
     Quotient.ind₂' <| by
       intro a b h
-      simpa only [Quotient.map'_mk'', QuotientGroup.eq] using h
+      simpa only [Quotient.map'_mk'', QuotientGroup.eq] using! h
 
 @[to_additive (attr := simp)]
 theorem quotientSubgroupOfEmbeddingOfLE_apply_mk (H : Subgroup α) (h : s ≤ t) (g : s) :
@@ -428,7 +433,7 @@ theorem quotientMapOfLE_apply_mk (h : s ≤ t) (g : α) :
 
 /-- The natural embedding `H ⧸ (⨅ i, f i).subgroupOf H ↪ Π i, H ⧸ (f i).subgroupOf H`. -/
 @[to_additive (attr := simps) /-- The natural embedding
-`H ⧸ (⨅ i, f i).addSubgroupOf H) ↪ Π i, H ⧸ (f i).addSubgroupOf H`. -/]
+`H ⧸ (⨅ i, f i).addSubgroupOf H ↪ Π i, H ⧸ (f i).addSubgroupOf H`. -/]
 def quotientiInfSubgroupOfEmbedding {ι : Type*} (f : ι → Subgroup α) (H : Subgroup α) :
     H ⧸ (⨅ i, f i).subgroupOf H ↪ ∀ i, H ⧸ (f i).subgroupOf H where
   toFun q i := quotientSubgroupOfMapOfLE H (iInf_le f i) q
@@ -468,7 +473,7 @@ variable [Group α] {H : Type*} [Group H]
 /-- An equivalence between any non-empty fiber of an `AddMonoidHom` and its kernel. -/]
 def fiberEquivKer (f : α →* H) (a : α) : f ⁻¹' {f a} ≃ f.ker :=
   .trans
-    (Equiv.setCongr <| Set.ext fun _ => by
+    (Set.equivOfEq <| Set.ext fun _ => by
       rw [mem_preimage, mem_singleton_iff, mem_smul_set_iff_inv_smul_mem, SetLike.mem_coe, mem_ker,
         smul_eq_mul, map_mul, map_inv, inv_mul_eq_one, eq_comm])
     (Subgroup.leftCosetEquivSubgroup a)
@@ -533,7 +538,7 @@ noncomputable def preimageMkEquivSubgroupProdSet (s : Subgroup α) (t : Set (α 
       show QuotientGroup.mk _ ∈ t by
         rw [mk_mul_of_mem _ a.1.2, out_eq']
         exact a.2.2⟩
-  left_inv := fun ⟨a, _⟩ => Subtype.eq <| show _ * _ = a by simp
+  left_inv := fun ⟨a, _⟩ => Subtype.ext <| show _ * _ = a by simp
   right_inv := fun ⟨⟨a, ha⟩, ⟨x, hx⟩⟩ => by ext <;> simp [ha]
 
 open MulAction in

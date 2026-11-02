@@ -3,14 +3,24 @@ Copyright (c) 2020 Markus Himmel. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel, Kim Morrison
 -/
-import Mathlib.CategoryTheory.Preadditive.Yoneda.Basic
-import Mathlib.CategoryTheory.Preadditive.Injective.Basic
+module
+
+public import Mathlib.CategoryTheory.Preadditive.Injective.Basic
+public import Mathlib.CategoryTheory.Preadditive.Yoneda.Basic
+
 import Mathlib.Algebra.Category.Grp.EpiMono
 import Mathlib.Algebra.Category.ModuleCat.EpiMono
 
+set_option doc.verso true
+set_option doc.verso.suggestions false
+
 /-!
+# Injective objects
+
 An object is injective iff the preadditive yoneda functor on it preserves epimorphisms.
 -/
+
+public section
 
 
 universe v u

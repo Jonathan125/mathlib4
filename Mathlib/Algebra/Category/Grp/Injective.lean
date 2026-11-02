@@ -3,18 +3,20 @@ Copyright (c) 2022 Jujian Zhang. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jujian Zhang
 -/
-import Mathlib.Algebra.Category.Grp.ZModuleEquivalence
-import Mathlib.Algebra.Category.ModuleCat.Injective
-import Mathlib.Algebra.EuclideanDomain.Int
-import Mathlib.GroupTheory.Divisible
-import Mathlib.RingTheory.PrincipalIdealDomain
+module
+
+public import Mathlib.Algebra.Category.Grp.ZModuleEquivalence
+public import Mathlib.Algebra.Category.ModuleCat.Injective
+public import Mathlib.Algebra.EuclideanDomain.Int
+public import Mathlib.GroupTheory.Divisible
+public import Mathlib.RingTheory.PrincipalIdealDomain
 
 /-!
 # Injective objects in the category of abelian groups
 
 In this file we prove that divisible groups are injective objects in category of (additive) abelian
 groups. The proof that the category of abelian groups has enough injective objects can be found
-in `Mathlib/Algebra/Category/GrpCat/EnoughInjectives.lean`.
+in `Mathlib/Algebra/Category/Grp/EnoughInjectives.lean`.
 
 ## Main results
 
@@ -22,9 +24,9 @@ in `Mathlib/Algebra/Category/GrpCat/EnoughInjectives.lean`.
 
 -/
 
-open CategoryTheory
+public section
 
-open Pointwise
+open CategoryTheory
 
 universe u
 
@@ -46,11 +48,11 @@ theorem Module.Baer.of_divisible [DivisibleBy A ℤ] : Module.Baer ℤ A := fun 
 namespace AddCommGrpCat
 
 theorem injective_as_module_iff : Injective (ModuleCat.of ℤ A) ↔
-    Injective (C := AddCommGrpCat) (AddCommGrpCat.of A) :=
-  ((forget₂ (ModuleCat ℤ) AddCommGrpCat).asEquivalence.map_injective_iff (ModuleCat.of ℤ A)).symm
+    Injective (C := AddCommGrpCat) ↧A :=
+  ((forget₂ (ModuleCat ℤ) AddCommGrpCat).asEquivalence.map_injective_iff ↧A).symm
 
 instance injective_of_divisible [DivisibleBy A ℤ] :
-    Injective (C := AddCommGrpCat) (AddCommGrpCat.of A) :=
+    Injective (C := AddCommGrpCat) ↧A :=
   (injective_as_module_iff A).mp <|
     Module.injective_object_of_injective_module (inj := (Module.Baer.of_divisible A).injective)
 

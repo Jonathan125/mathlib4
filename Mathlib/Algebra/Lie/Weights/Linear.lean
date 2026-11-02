@@ -3,9 +3,9 @@ Copyright (c) 2023 Oliver Nash. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Oliver Nash
 -/
-import Mathlib.Algebra.Lie.Weights.Basic
-import Mathlib.LinearAlgebra.Trace
-import Mathlib.LinearAlgebra.FreeModule.PID
+module
+
+public import Mathlib.Algebra.Lie.Weights.Basic
 
 /-!
 # Lie modules with linear weights
@@ -20,7 +20,7 @@ non-linear weights do exist. For example if we take:
 * `M`: the natural two-dimensional representation of `L`,
 
 then there is a single weight and it is non-linear. (See remark following Proposition 9 of
-chapter VII, §1.3 in [N. Bourbaki, Chapters 7--9](bourbaki1975b).)
+chapter VII, §1.3 in [N. Bourbaki, Chapters 7--9][bourbaki1975b].)
 
 We thus introduce a typeclass `LieModule.LinearWeights` to encode the fact that a Lie module does
 have linear weights and provide typeclass instances in the two important cases that `L` is Abelian
@@ -39,7 +39,7 @@ or `R` has characteristic zero.
 
 -/
 
-open Set
+@[expose] public section
 
 variable (k R L M : Type*) [CommRing R] [LieRing L] [LieAlgebra R L]
   [AddCommGroup M] [Module R M] [LieRingModule L M] [LieModule R L M]
@@ -81,7 +81,7 @@ lemma apply_lie (x y : L) :
 @[simp] lemma coe_coe : (↑(χ : L →ₗ[R] R) : L → R) = (χ : L → R) := rfl
 
 @[simp] lemma coe_toLinear_eq_zero_iff : (χ : L →ₗ[R] R) = 0 ↔ χ.IsZero :=
-  ⟨fun h ↦ funext fun x ↦ LinearMap.congr_fun h x, fun h ↦ by ext; simp [h.eq]⟩
+  ⟨fun h ↦ funext fun x ↦ congr($h x), fun h ↦ by ext; simp [h.eq]⟩
 
 lemma coe_toLinear_ne_zero_iff : (χ : L →ₗ[R] R) ≠ 0 ↔ χ.IsNonZero := by simp
 
@@ -90,8 +90,10 @@ abbrev ker := LinearMap.ker (χ : L →ₗ[R] R)
 
 end Weight
 
+attribute [local instance 100] LieRing.ofAssociativeRing
+
 /-- For an Abelian Lie algebra, the weights of any Lie module are linear. -/
-instance instLinearWeightsOfIsLieAbelian [IsLieAbelian L] [NoZeroSMulDivisors R M] :
+instance instLinearWeightsOfIsLieAbelian [IsLieAbelian L] [IsDomain R] [Module.IsTorsionFree R M] :
     LinearWeights R L M :=
   have aux : ∀ (χ : L → R), genWeightSpace M χ ≠ ⊥ → ∀ (x y : L), χ (x + y) = χ x + χ y := by
     have h : ∀ x y, Commute (toEnd R L M x) (toEnd R L M y) := fun x y ↦ by
@@ -205,6 +207,7 @@ lemma toEnd_eq (x : L) :
     (shift R L M χ).conj (toEnd R L (genWeightSpace M χ) x - χ x • LinearMap.id) := by
   tauto
 
+set_option backward.isDefEq.respectTransparency false in
 /-- By Engel's theorem, if `M` is Noetherian, the shifted action `⁅x, m⁆ - χ x • m` makes the
 `χ`-weight space into a nilpotent Lie module. -/
 instance [IsNoetherian R M] : IsNilpotent L (shiftedGenWeightSpace R L M χ) :=

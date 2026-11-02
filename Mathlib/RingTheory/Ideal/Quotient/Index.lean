@@ -3,15 +3,18 @@ Copyright (c) 2024 Andrew Yang. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Andrew Yang
 -/
+module
+
+public import Mathlib.GroupTheory.Index
+public import Mathlib.RingTheory.Ideal.Quotient.Operations
+public import Mathlib.RingTheory.TensorProduct.Finite
+
 import Mathlib.Algebra.Ring.GeomSum
 import Mathlib.Data.Finsupp.Fintype
-import Mathlib.GroupTheory.Index
 import Mathlib.LinearAlgebra.DirectSum.Finsupp
 import Mathlib.LinearAlgebra.TensorProduct.Quotient
 import Mathlib.LinearAlgebra.TensorProduct.RightExactness
 import Mathlib.RingTheory.Finiteness.Cardinality
-import Mathlib.RingTheory.Ideal.Quotient.Operations
-import Mathlib.RingTheory.TensorProduct.Finite
 
 /-!
 # Indices of ideals
@@ -25,6 +28,8 @@ import Mathlib.RingTheory.TensorProduct.Finite
   the index of `I ^ n` is bounded by `#(R ⧸ I) ^ (k⁰ + k¹ + ⋯ + kⁿ⁻¹)`.
 
 -/
+
+public section
 
 variable {R M : Type*} [CommRing R] [AddCommGroup M] [Module R M]
 variable (I : Ideal R) {N : Submodule R M}
@@ -47,7 +52,7 @@ lemma Submodule.finite_quotient_smul [Finite (R ⧸ I)] [Finite (M ⧸ N)] (hN :
       N.injective_subtype (by simp [Submodule.smul_le_right])) ≪≫ₗ
         (quotTensorEquivQuotSMul N I).symm
   rw [Nat.card_congr e.toEquiv]
-  have : Module.Finite R N := Module.Finite.iff_fg.mpr hN
+  have : Module.Finite R N := .of_fg hN
   have : Finite ((R ⧸ I) ⊗[R] N) := Module.finite_of_finite (R ⧸ I)
   exact Nat.card_pos.ne'
 
@@ -70,13 +75,14 @@ lemma Submodule.index_smul_le [Finite (R ⧸ I)]
       (quotTensorEquivQuotSMul N I).symm
   rw [Nat.card_congr e.toEquiv]
   have H : LinearMap.range (Finsupp.linearCombination R (α := s) (↑)) = N := by
-    rw [Finsupp.range_linearCombination, ← hs, Subtype.range_val]
+    rw [Finsupp.range_linearCombination, ← hs]
+    exact congr(span R $Subtype.range_coe_subtype)
   let f : (s →₀ R) →ₗ[R] N := (Finsupp.linearCombination R (↑)).codRestrict _
     (fun c => by rw [← H, LinearMap.mem_range]; exact exists_apply_eq_apply _ _)
   have hf : Function.Surjective f := fun x ↦ by
     obtain ⟨y, hy⟩ := H.ge x.2; exact ⟨y, Subtype.ext hy⟩
   have : Function.Surjective
-      (f.lTensor (R ⧸ I) ∘ₗ (finsuppScalarRight R (R ⧸ I) s).symm.toLinearMap) :=
+      (f.lTensor (R ⧸ I) ∘ₗ (finsuppScalarRight R R (R ⧸ I) s).symm.toLinearMap) :=
     (LinearMap.lTensor_surjective (R ⧸ I) hf).comp (LinearEquiv.surjective _)
   refine (Nat.card_le_card_of_surjective _ this).trans ?_
   simp only [Nat.card_eq_fintype_card, Fintype.card_finsupp, Fintype.card_coe, le_rfl]

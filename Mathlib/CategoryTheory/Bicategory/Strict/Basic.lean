@@ -3,8 +3,10 @@ Copyright (c) 2022 Yuma Mizuno. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yuma Mizuno
 -/
-import Mathlib.CategoryTheory.EqToHom
-import Mathlib.CategoryTheory.Bicategory.Basic
+module
+
+public import Mathlib.CategoryTheory.Bicategory.Basic
+public import Mathlib.CategoryTheory.EqToHom
 
 /-!
 # Strict bicategories
@@ -20,6 +22,8 @@ We cannot use this definition directly here since the types of 2-morphisms depen
 For this reason, we use `eqToIso`, which gives isomorphisms from equalities, instead of
 identities.
 -/
+
+public section
 
 
 namespace CategoryTheory
@@ -63,13 +67,13 @@ variable {B}
 
 @[simp]
 theorem whiskerLeft_eqToHom {a b c : B} (f : a ⟶ b) {g h : b ⟶ c} (η : g = h) :
-    f ◁ eqToHom η = eqToHom (congr_arg₂ (· ≫ ·) rfl η) := by
+    f ◁ eqToHom η = eqToHom congr(_ ≫ $η) := by
   cases η
   simp only [whiskerLeft_id, eqToHom_refl]
 
 @[simp]
 theorem eqToHom_whiskerRight {a b c : B} {f g : a ⟶ b} (η : f = g) (h : b ⟶ c) :
-    eqToHom η ▷ h = eqToHom (congr_arg₂ (· ≫ ·) η rfl) := by
+    eqToHom η ▷ h = eqToHom congr($η ≫ _) := by
   cases η
   simp only [id_whiskerRight, eqToHom_refl]
 

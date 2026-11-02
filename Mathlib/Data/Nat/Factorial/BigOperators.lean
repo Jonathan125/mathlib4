@@ -3,7 +3,12 @@ Copyright (c) 2022 Pim Otte. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kyle Miller, Pim Otte
 -/
-import Mathlib.Algebra.Order.BigOperators.Ring.Finset
+module
+
+public import Mathlib.Algebra.Order.BigOperators.Ring.Finset
+public import Mathlib.Data.Nat.Prime.Defs
+
+import Mathlib.Algebra.BigOperators.Associated
 import Mathlib.Tactic.Zify
 
 /-!
@@ -15,6 +20,8 @@ While in terms of semantics they could be in the `Basic.lean` file, importing
 `Algebra.BigOperators.Group.Finset` leads to a cyclic import.
 
 -/
+
+public section
 
 
 open Finset Nat
@@ -45,6 +52,10 @@ theorem _root_.Finset.prod_range_add_one_eq_factorial (n : ℕ) : ∏ i ∈ rang
 theorem ascFactorial_eq_prod_range (n : ℕ) : ∀ k, n.ascFactorial k = ∏ i ∈ range k, (n + i)
   | 0 => rfl
   | k + 1 => by rw [ascFactorial, prod_range_succ_comm, ascFactorial_eq_prod_range n k]
+
+lemma Prime.dvd_ascFactorial_iff {p k n : ℕ} (hp : p.Prime) :
+    p ∣ k.ascFactorial n ↔ ∃ i < n, p ∣ k + i := by
+  simp [Nat.ascFactorial_eq_prod_range, hp.prime.dvd_finsetProd_iff]
 
 theorem descFactorial_eq_prod_range (n : ℕ) : ∀ k, n.descFactorial k = ∏ i ∈ range k, (n - i)
   | 0 => rfl

@@ -3,13 +3,16 @@ Copyright (c) 2020 Yury Kudryashov. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Alexander Bentkamp, Yury Kudryashov
 -/
-import Mathlib.Analysis.Convex.Between
+module
+
+public import Mathlib.Analysis.Convex.Between
+public import Mathlib.Analysis.Normed.Affine.AddTorsorBases
+
 import Mathlib.Analysis.Normed.Affine.AddTorsor
-import Mathlib.Analysis.Normed.Affine.AddTorsorBases
-import Mathlib.Analysis.Normed.Module.Convex
 
 /-!
 # Simplices in normed affine spaces
+
 We prove the following facts:
 
 * `exists_mem_interior_convexHull_affineBasis` : We can intercalate a simplex between a point and
@@ -18,6 +21,8 @@ We prove the following facts:
   polytope between a compact convex set and one of its neighborhoods.
 -/
 
+public section
+
 variable {E P : Type*}
 
 open AffineBasis Module Metric Set
@@ -25,7 +30,6 @@ open scoped Convex Pointwise Topology
 
 section SeminormedAddCommGroup
 variable [SeminormedAddCommGroup E] [NormedSpace ℝ E] [PseudoMetricSpace P] [NormedAddTorsor E P]
-variable {s : Set E}
 
 theorem Wbtw.dist_add_dist {x y z : P} (h : Wbtw ℝ x y z) :
     dist x y + dist y z = dist x z := by
@@ -45,7 +49,6 @@ variable [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] {s
 lemma exists_mem_interior_convexHull_affineBasis (hs : s ∈ 𝓝 x) :
     ∃ b : AffineBasis (Fin (finrank ℝ E + 1)) ℝ E,
       x ∈ interior (convexHull ℝ (range b)) ∧ convexHull ℝ (range b) ⊆ s := by
-  classical
   -- By translating, WLOG `x` is the origin.
   wlog hx : x = 0
   · obtain ⟨b, hb⟩ := this (s := -x +ᵥ s) (by simpa using vadd_mem_nhds_vadd (-x) hs) rfl

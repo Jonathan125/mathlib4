@@ -3,8 +3,10 @@ Copyright (c) 2025 Yaël Dillies. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yaël Dillies
 -/
-import Mathlib.Order.Interval.Finset.Defs
-import Mathlib.Order.Interval.Set.SuccPred
+module
+
+public import Mathlib.Order.Interval.Finset.Defs
+public import Mathlib.Order.Interval.Set.SuccPred
 
 /-!
 # Finset intervals in a successor-predecessor order
@@ -22,6 +24,8 @@ Please keep in sync with:
 
 Copy over `insert` lemmas from `Mathlib/Order/Interval/Finset/Nat.lean`.
 -/
+
+public section
 
 assert_not_exists MonoidWithZero
 
@@ -123,8 +127,11 @@ lemma Icc_pred_right_eq_Ico_of_not_isMin (hb : ¬ IsMin b) (a : α) : Icc a (pre
 lemma Ioc_pred_left_eq_Icc_of_not_isMin (ha : ¬ IsMin a) (b : α) : Ioc (pred a) b = Icc a b :=
   coe_injective <| by simpa using Set.Ioc_pred_left_eq_Icc_of_not_isMin ha _
 
-lemma Ioo_pred_left_eq_Ioc_of_not_isMin (ha : ¬ IsMin a) (b : α) : Ioo (pred a) b = Ico a b :=
-  coe_injective <| by simpa using Set.Ioo_pred_left_eq_Ioc_of_not_isMin ha _
+lemma Ioo_pred_left_eq_Ico_of_not_isMin (ha : ¬ IsMin a) (b : α) : Ioo (pred a) b = Ico a b :=
+  coe_injective <| by simpa using Set.Ioo_pred_left_eq_Ico_of_not_isMin ha _
+
+@[deprecated (since := "2026-09-03")]
+alias Ioo_pred_left_eq_Ioc_of_not_isMin := Ioo_pred_left_eq_Ico_of_not_isMin
 
 lemma Ioc_pred_pred_eq_Ico_of_not_isMin (ha : ¬ IsMin a) (b : α) :
     Ioc (pred a) (pred b) = Ico a b :=
@@ -162,8 +169,10 @@ variable [NoMinOrder α]
 
 lemma Icc_pred_right_eq_Ico (a b : α) : Icc a (pred b) = Ico a b := coe_injective <| by simp
 lemma Ioc_pred_left_eq_Icc (a b : α) : Ioc (pred a) b = Icc a b := coe_injective <| by simp
-lemma Ioo_pred_left_eq_Ioc (a b : α) : Ioo (pred a) b = Ico a b := coe_injective <| by simp
+lemma Ioo_pred_left_eq_Ico (a b : α) : Ioo (pred a) b = Ico a b := coe_injective <| by simp
 lemma Ioc_pred_pred_eq_Ico (a b : α) : Ioc (pred a) (pred b) = Ico a b := coe_injective <| by simp
+
+@[deprecated (since := "2026-09-03")] alias Ioo_pred_left_eq_Ioc := Ioo_pred_left_eq_Ico
 
 /-! ##### Inserting into intervals -/
 
@@ -202,7 +211,7 @@ lemma Iio_succ_eq_Iic (b : α) : Iio (succ b) = Iic b := coe_injective <| by sim
 end SuccOrder
 
 section PredOrder
-variable [PredOrder α] {a b : α}
+variable [PredOrder α] {b : α}
 
 lemma Iic_pred_eq_Iio_of_not_isMin (hb : ¬ IsMin b) : Iic (pred b) = Iio b :=
   coe_injective <| by simpa using Set.Iic_pred_eq_Iio_of_not_isMin hb
@@ -232,7 +241,7 @@ lemma Ici_succ_eq_Ioi (a : α) : Ici (succ a) = Ioi a := coe_injective <| by sim
 end SuccOrder
 
 section PredOrder
-variable [PredOrder α] {a a : α}
+variable [PredOrder α] {a : α}
 
 lemma Ioi_pred_eq_Ici_of_not_isMin (ha : ¬ IsMin a) : Ioi (pred a) = Ici a :=
   coe_injective <| by simpa using Set.Ioi_pred_eq_Ici_of_not_isMin ha

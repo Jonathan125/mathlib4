@@ -3,6 +3,8 @@ Copyright (c) 2025 Concordance Inc. dba Harmonic. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yury Kudryashov
 -/
+module
+
 import Mathlib.Init
 
 /-!
@@ -11,6 +13,8 @@ import Mathlib.Init
 In this file we define `Nat.nthRoot n a` to be the floor of the `n`th root of `a`.
 The function is defined in terms of natural numbers with no dependencies outside of prelude.
 -/
+
+@[expose] public section
 
 /-- `Nat.nthRoot n a = ⌊(a : ℝ) ^ (1 / n : ℝ)⌋₊` defined in terms of natural numbers.
 

@@ -3,11 +3,17 @@ Copyright (c) 2025 Yury Kudryashov. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yury Kudryashov
 -/
-import Mathlib.Topology.Path
-import Mathlib.Topology.UniformSpace.CompactConvergence
-import Mathlib.Topology.UniformSpace.HeineCantor
-import Mathlib.Topology.MetricSpace.Lipschitz
+module
+
+public import Mathlib.Topology.Path
+public import Mathlib.Topology.UniformSpace.CompactConvergence
+
 import Mathlib.Topology.ContinuousMap.Interval
+import Mathlib.Topology.MetricSpace.Lipschitz
+import Mathlib.Topology.UniformSpace.HeineCantor
+
+set_option doc.verso true
+set_option doc.verso.suggestions false
 
 /-!
 # Paths in uniform spaces
@@ -20,6 +26,8 @@ The uniform space structure is induced from the space of continuous maps `C(I, X
 and corresponds to uniform convergence of paths on `I`, see `Path.hasBasis_uniformity`.
 -/
 
+public section
+
 open scoped unitInterval Topology Uniformity
 
 variable {X : Type*} [UniformSpace X] {x y z : X}
@@ -31,7 +39,7 @@ instance instUniformSpace : UniformSpace (Path x y) :=
 
 theorem isUniformEmbedding_coe : IsUniformEmbedding ((↑) : Path x y → C(I, X)) where
   comap_uniformity := rfl
-  injective := ContinuousMap.coe_injective'
+  injective := ContinuousMap.injective_ofClass
 
 theorem uniformContinuous (γ : Path x y) : UniformContinuous γ :=
   CompactSpace.uniformContinuous_of_continuous <| map_continuous _
@@ -75,6 +83,6 @@ theorem uniformContinuous_trans :
 is a complete uniform space. -/
 instance instCompleteSpace [CompleteSpace X] : CompleteSpace (Path x y) :=
   isUniformEmbedding_coe.completeSpace <| by simpa [Set.EqOn, range_coe]
-    using ContinuousMap.isComplete_setOf_eqOn (Function.update (fun _ : I ↦ y) 0 x) {0, 1}
+    using ContinuousMap.isComplete_setOfPred_eqOn (Function.update (fun _ : I ↦ y) 0 x) {0, 1}
 
 end Path

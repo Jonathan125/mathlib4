@@ -3,15 +3,22 @@ Copyright (c) 2024 Yaël Dillies. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yaël Dillies
 -/
-import Mathlib.Algebra.Order.Group.Opposite
-import Mathlib.Algebra.Order.Ring.Defs
-import Mathlib.Algebra.Ring.Opposite
+module
+
+public import Mathlib.Algebra.Order.Group.Opposite
+public import Mathlib.Algebra.Order.Ring.Defs
+public import Mathlib.Algebra.Ring.Opposite
+
+set_option doc.verso true
+set_option doc.verso.suggestions false
 
 /-!
 # Ordered ring instances for `MulOpposite`/`AddOpposite`
 
 This file transfers ordered (semi)ring instances from `R` to `Rᵐᵒᵖ` and `Rᵃᵒᵖ`.
 -/
+
+public section
 
 variable {R : Type*}
 

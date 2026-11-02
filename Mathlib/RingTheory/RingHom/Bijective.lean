@@ -3,8 +3,14 @@ Copyright (c) 2025 Christian Merten. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Christian Merten
 -/
-import Mathlib.RingTheory.LocalProperties.Basic
+module
+
+public import Mathlib.RingTheory.LocalProperties.Basic
+
 import Mathlib.RingTheory.LocalProperties.Exactness
+
+set_option doc.verso true
+set_option doc.verso.suggestions false
 
 /-!
 # Meta properties of bijective ring homomorphisms
@@ -17,7 +23,7 @@ We don't define a `RingHom.Bijective` predicate, but use `fun f ↦ Function.Bij
 the ring hom property.
 -/
 
-open TensorProduct
+public section
 
 variable {R S : Type*} [CommRing R] [CommRing S]
 

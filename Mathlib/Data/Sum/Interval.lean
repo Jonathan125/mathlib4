@@ -3,9 +3,10 @@ Copyright (c) 2022 Yaël Dillies. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yaël Dillies
 -/
-import Mathlib.Data.Finset.Sum
-import Mathlib.Data.Sum.Order
-import Mathlib.Order.Interval.Finset.Defs
+module
+
+public import Mathlib.Order.Interval.Finset.Defs
+public import Mathlib.Order.Sum.Order
 
 /-!
 # Finite intervals in a disjoint union
@@ -13,6 +14,8 @@ import Mathlib.Order.Interval.Finset.Defs
 This file provides the `LocallyFiniteOrder` instance for the disjoint sum and linear sum of two
 orders and calculates the cardinality of their finite intervals.
 -/
+
+@[expose] public section
 
 
 open Function Sum
@@ -145,7 +148,7 @@ lemma mem_sumLexLift :
     · exact fun h ↦ (notMem_empty _ h).elim
     · rw [sumLexLift, mem_map]
       rintro ⟨c, hc, rfl⟩
-      exact Or.inr (Or.inr <| Or.inr <| ⟨a, b, c, rfl, rfl, rfl, hc⟩)
+      exact Or.inr (Or.inr <| Or.inr ⟨a, b, c, rfl, rfl, rfl, hc⟩)
   · rintro (⟨a, b, c, rfl, rfl, rfl, hc⟩ | ⟨a, b, c, rfl, rfl, rfl, hc⟩ |
       ⟨a, b, c, rfl, rfl, rfl, hc⟩ | ⟨a, b, c, rfl, rfl, rfl, hc⟩)
     · exact mem_map_of_mem _ hc
@@ -428,8 +431,8 @@ a diamond with this instance, and constructs data from data. We should consider 
 example [Fintype α] [Preorder α] [Preorder β] [OrderBot α] [OrderBot β] [OrderTop α]
     [LocallyFiniteOrder α] [LocallyFiniteOrder β] :
     LocallyFiniteOrder.toLocallyFiniteOrderBot = instLocallyFiniteOrderBot (α := α) (β := β) := by
-  try with_reducible_and_instances rfl -- fails
-  try rfl -- fails
+  fail_if_success with_reducible_and_instances rfl -- fails
+  fail_if_success rfl -- fails
   exact Subsingleton.elim _ _
 
 section LocallyFiniteOrderTop

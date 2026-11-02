@@ -3,9 +3,11 @@ Copyright (c) 2025 Christian Merten. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Christian Merten
 -/
-import Mathlib.AlgebraicGeometry.Morphisms.AffineAnd
-import Mathlib.AlgebraicGeometry.Morphisms.LocalIso
-import Mathlib.CategoryTheory.MorphismProperty.Descent
+module
+
+public import Mathlib.AlgebraicGeometry.Morphisms.AffineAnd
+public import Mathlib.AlgebraicGeometry.Morphisms.LocalIso
+public import Mathlib.CategoryTheory.MorphismProperty.Descent
 
 /-!
 # Descent of morphism properties
@@ -28,6 +30,8 @@ that `P` descends along `P'` from a codescent property of ring homomorphisms.
 
 -/
 
+public section
+
 universe u v
 
 open TensorProduct CategoryTheory Limits
@@ -36,6 +40,7 @@ namespace AlgebraicGeometry
 
 variable (P P' : MorphismProperty Scheme.{u})
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 If `P` is local at the source, every quasi-compact scheme is dominated by an
 affine scheme via `p : Y ⟶ X` such that `p` satisfies `P`.
@@ -48,13 +53,9 @@ lemma Scheme.exists_hom_isAffine_of_isZariskiLocalAtSource (X : Scheme.{u}) [Com
   refine ⟨_, p, ⟨fun x ↦ ?_⟩, ?_, inferInstance⟩
   · obtain ⟨i, x, rfl⟩ := X.affineCover.finiteSubcover.exists_eq x
     use Sigma.ι X.affineCover.finiteSubcover.X i x
-    rw [← Scheme.Hom.comp_apply, Sigma.ι_desc]
+    rw [← Scheme.Hom.comp_apply, Sigma.ι_comp_desc]
   · rw [IsZariskiLocalAtSource.iff_of_openCover (P := P) (sigmaOpenCover _)]
     exact fun i ↦ by simpa [p] using IsZariskiLocalAtSource.of_isOpenImmersion _
-
-@[deprecated (since := "2025-10-07")]
-alias Scheme.exists_hom_isAffine_of_isLocalAtSource :=
-  Scheme.exists_hom_isAffine_of_isZariskiLocalAtSource
 
 /-- If `P` is local at the target, to show `P` descends along `P'` we may assume
 the base to be affine. -/
@@ -86,9 +87,6 @@ lemma IsZariskiLocalAtTarget.descendsAlong [IsZariskiLocalAtTarget P] [P'.IsStab
   obtain ⟨R, rfl⟩ := hZ
   exact H f g h hf
 
-@[deprecated (since := "2025-10-07")]
-alias IsLocalAtTarget.descendsAlong := IsZariskiLocalAtTarget.descendsAlong
-
 variable (Q Q' : ∀ {R S : Type u} [CommRing R] [CommRing S], (R →+* S) → Prop)
 
 variable {Q Q'} in
@@ -108,7 +106,7 @@ lemma of_pullback_fst_Spec_of_codescendsAlong [P.RespectsIso]
   refine hQQ'.algebraMap_tensorProduct (R := R) (S := T) (T := S) _ (H₁ h) ?_
   rwa [← pullbackSpecIso_hom_fst R T S, P.cancel_left_of_respectsIso, H₂] at hf
 
-/-- If `X` admits a morphism `p : T ⟶ X` from an affine scheme satisfying `P', to
+/-- If `X` admits a morphism `p : T ⟶ X` from an affine scheme satisfying `P'`, to
 show a property descends along a morphism `f : X ⟶ Z` satisfying `P'`, `X` may assumed to
 be affine. -/
 lemma IsStableUnderBaseChange.of_pullback_fst_of_isAffine [P'.RespectsIso]
@@ -130,6 +128,7 @@ variable
   (H₁ : (@IsLocalIso ⊓ @Surjective : MorphismProperty Scheme) ≤ P')
   (H₂ : ∀ {R S : CommRingCat.{u}} {f : R ⟶ S}, P' (Spec.map f) → Q' f.hom)
 
+set_option backward.isDefEq.respectTransparency.types false in
 include H₁ in
 lemma IsZariskiLocalAtTarget.descendsAlong_inf_quasiCompact [IsZariskiLocalAtTarget P]
     (H : ∀ {R S : CommRingCat.{u}} {Y : Scheme.{u}} (φ : R ⟶ S) (g : Y ⟶ Spec R),
@@ -148,10 +147,6 @@ lemma IsZariskiLocalAtTarget.descendsAlong_inf_quasiCompact [IsZariskiLocalAtTar
   obtain ⟨T, rfl⟩ := hX
   obtain ⟨φ, rfl⟩ := Spec.map_surjective f
   exact H φ g hf.1 h
-
-@[deprecated (since := "2025-10-07")]
-alias IsLocalAtTarget.descendsAlong_inf_quasiCompact :=
-  IsZariskiLocalAtTarget.descendsAlong_inf_quasiCompact
 
 include H₁ H₂ in
 /--

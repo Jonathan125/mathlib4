@@ -3,17 +3,22 @@ Copyright (c) 2016 Jeremy Avigad. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jeremy Avigad, Leonardo de Moura, Mario Carneiro, Johannes Hölzl
 -/
-import Mathlib.Algebra.Notation.Pi.Defs
-import Mathlib.Algebra.Notation.Prod
-import Mathlib.Order.Basic
+module
+
+public import Mathlib.Algebra.Notation.Pi.Defs
+public import Mathlib.Algebra.Notation.Prod
+public import Mathlib.Order.Basic
+
+set_option doc.verso true
+set_option doc.verso.suggestions false
 
 /-!
 # Typeclass expressing `0 ≤ 1`.
 -/
 
-variable {α : Type*}
+public section
 
-open Function
+variable {α : Type*}
 
 /-- Typeclass for expressing that the `0` of a type is less or equal to its `1`. -/
 class ZeroLEOneClass (α : Type*) [Zero α] [One α] [LE α] : Prop where
@@ -57,3 +62,7 @@ lemma zero_lt_one' : (0 : α) < 1 := zero_lt_one
 end
 
 alias one_pos := zero_lt_one
+
+instance Nat.instZeroLEOneClass : ZeroLEOneClass Nat := ⟨Nat.le_of_lt Nat.zero_lt_one⟩
+instance Int.instZeroLEOneClass : ZeroLEOneClass Int := ⟨Int.le_of_lt Int.zero_lt_one⟩
+instance Rat.instZeroLEOneClass : ZeroLEOneClass Rat := ⟨by decide⟩

@@ -3,12 +3,12 @@ Copyright (c) 2025 Joël Riou. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Joël Riou
 -/
-import Mathlib.Algebra.Category.Grp.Abelian
-import Mathlib.Algebra.Category.Grp.EpiMono
+module
+
+public import Mathlib.Algebra.Homology.ShortComplex.Ab
+public import Mathlib.CategoryTheory.Abelian.SerreClass.Basic
+
 import Mathlib.Algebra.Category.Grp.Zero
-import Mathlib.Algebra.Homology.ShortComplex.Ab
-import Mathlib.CategoryTheory.Abelian.SerreClass.Basic
-import Mathlib.Data.Finite.Prod
 
 /-!
 # The Serre class of finite abelian groups
@@ -17,6 +17,8 @@ In this file, we define `isFinite : ObjectProperty AddCommGrpCat` and show
 that it is a Serre class.
 
 -/
+
+@[expose] public section
 
 universe u
 
@@ -33,7 +35,7 @@ def isFinite : ObjectProperty AddCommGrpCat.{u} :=
 lemma prop_isFinite_iff (M : AddCommGrpCat.{u}) : isFinite M ↔ Finite M := Iff.rfl
 
 instance : isFinite.{u}.IsSerreClass where
-  exists_zero := ⟨.of PUnit, isZero_of_subsingleton _,
+  exists_zero := ⟨↧PUnit, isZero_of_subsingleton _,
     by rw [prop_isFinite_iff]; infer_instance⟩
   prop_of_mono {M N} f hf hN := by
     rw [AddCommGrpCat.mono_iff_injective] at hf

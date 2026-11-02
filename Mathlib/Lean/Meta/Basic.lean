@@ -3,15 +3,20 @@ Copyright (c) 2023 Kim Morrison. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import Mathlib.Init
+module
+
+public import Mathlib.Init
+
 import Lean.Meta.AppBuilder
-import Lean.Meta.Basic
+import Lean.Meta.Coe
 
 /-!
 # Additions to `Lean.Meta.Basic`
 
 Likely these already exist somewhere. Pointers welcome.
 -/
+
+public section
 
 /--
 Restore the metavariable context after execution.

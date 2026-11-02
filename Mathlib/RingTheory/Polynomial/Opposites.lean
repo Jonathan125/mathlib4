@@ -3,7 +3,10 @@ Copyright (c) 2022 Damiano Testa. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Damiano Testa
 -/
-import Mathlib.Algebra.Polynomial.Degree.Support
+module
+
+public import Mathlib.Algebra.Polynomial.Degree.Support
+
 import Mathlib.Tactic.NoncommRing
 
 /-! # Interactions between `R[X]` and `Rᵐᵒᵖ[X]`
@@ -12,8 +15,10 @@ This file contains the basic API for "pushing through" the isomorphism
 `opRingEquiv : R[X]ᵐᵒᵖ ≃+* Rᵐᵒᵖ[X]`.  It allows going back and forth between a polynomial ring
 over a semiring and the polynomial ring over the opposite semiring. -/
 
+@[expose] public section
 
-open Polynomial
+
+open AddMonoidAlgebra Polynomial
 
 open MulOpposite
 
@@ -26,7 +31,8 @@ namespace Polynomial
 /-- Ring isomorphism between `R[X]ᵐᵒᵖ` and `Rᵐᵒᵖ[X]` sending each coefficient of a polynomial
 to the corresponding element of the opposite ring. -/
 def opRingEquiv (R : Type*) [Semiring R] : R[X]ᵐᵒᵖ ≃+* Rᵐᵒᵖ[X] :=
-  ((toFinsuppIso R).op.trans AddMonoidAlgebra.opRingEquiv).trans (toFinsuppIso _).symm
+  AddMonoidAlgebra.opRingEquiv.trans <|
+    AddMonoidAlgebra.mapDomainRingEquiv _ AddOpposite.opAddEquiv.symm
 
 /-!  Lemmas to get started, using `opRingEquiv R` on the various expressions of
 `Finsupp.single`: `monomial`, `C a`, `X`, `C a * X ^ n`. -/
@@ -35,9 +41,7 @@ def opRingEquiv (R : Type*) [Semiring R] : R[X]ᵐᵒᵖ ≃+* Rᵐᵒᵖ[X] :=
 @[simp]
 theorem opRingEquiv_op_monomial (n : ℕ) (r : R) :
     opRingEquiv R (op (monomial n r : R[X])) = monomial n (op r) := by
-  simp only [opRingEquiv, RingEquiv.coe_trans, Function.comp_apply,
-    AddMonoidAlgebra.opRingEquiv_apply, RingEquiv.op_apply_apply, toFinsuppIso_apply, unop_op,
-    toFinsupp_monomial, Finsupp.mapRange_single, toFinsuppIso_symm_apply, ofFinsupp_single]
+  ext; simp [opRingEquiv, ← Polynomial.single_eq_monomial]
 
 @[simp]
 theorem opRingEquiv_op_C (a : R) : opRingEquiv R (op (C a)) = C (op a) :=
@@ -74,14 +78,14 @@ theorem opRingEquiv_symm_C_mul_X_pow (r : Rᵐᵒᵖ) (n : ℕ) :
 
 /-!  Lemmas about more global properties of polynomials and opposites. -/
 
-
 @[simp]
 theorem coeff_opRingEquiv (p : R[X]ᵐᵒᵖ) (n : ℕ) :
-    (opRingEquiv R p).coeff n = op ((unop p).coeff n) := rfl
+    (opRingEquiv R p).coeff n = op ((unop p).coeff n) := by
+  simp [opRingEquiv]
 
 @[simp]
-theorem support_opRingEquiv (p : R[X]ᵐᵒᵖ) : (opRingEquiv R p).support = (unop p).support :=
-  Finsupp.support_mapRange_of_injective (map_zero _) _ op_injective
+theorem support_opRingEquiv (p : R[X]ᵐᵒᵖ) : (opRingEquiv R p).support = (unop p).support := by
+  ext; simp
 
 @[simp]
 theorem natDegree_opRingEquiv (p : R[X]ᵐᵒᵖ) : (opRingEquiv R p).natDegree = (unop p).natDegree := by

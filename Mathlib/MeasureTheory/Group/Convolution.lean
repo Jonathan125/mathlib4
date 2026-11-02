@@ -3,8 +3,10 @@ Copyright (c) 2023 Josha Dekker. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Josha Dekker
 -/
-import Mathlib.MeasureTheory.Group.Defs
-import Mathlib.MeasureTheory.Measure.Prod
+module
+
+public import Mathlib.MeasureTheory.Group.Defs
+public import Mathlib.MeasureTheory.Measure.Prod
 
 /-!
 # The multiplicative and additive convolution of measures
@@ -18,6 +20,8 @@ In this file we define and prove properties about the convolutions of two measur
 * `MeasureTheory.Measure.conv`: The additive convolution of two measures: the map of `+`
   under the product measure.
 -/
+
+@[expose] public section
 
 namespace MeasureTheory
 
@@ -66,7 +70,7 @@ lemma mconv_dirac [MeasurableMul₂ M] (μ : Measure M) [SFinite μ] (x : M) :
 @[to_additive (attr := simp)]
 lemma dirac_mconv_dirac [MeasurableMul₂ M] (x y : M) :
     (dirac x) ∗ₘ (dirac y) = dirac (x * y) := by
-  rw [mconv_dirac, map_dirac (by fun_prop)]
+  rw [mconv_dirac, map_dirac' (by fun_prop)]
 
 /-- Convolution of the dirac measure at 1 with a measure μ returns μ. -/
 @[to_additive (attr := simp)
@@ -99,10 +103,10 @@ theorem mconv_zero (μ : Measure M) : μ ∗ₘ (0 : Measure M) = (0 : Measure M
 -- `mconv_smul_right` needs an instance to get `SFinite (c • ν)` from `SFinite ν`,
 -- hence it is placed in the `WithDensity` file, where the instance is defined.
 @[to_additive conv_smul_left]
-theorem mconv_smul_left (μ : Measure M) (ν : Measure M) [SFinite ν] (s : ℝ≥0∞) :
+theorem mconv_smul_left [MeasurableMul₂ M] (μ : Measure M) (ν : Measure M) [SFinite ν] (s : ℝ≥0∞) :
     (s • μ) ∗ₘ ν = s • (μ ∗ₘ ν) := by
   unfold mconv
-  rw [← Measure.map_smul, Measure.prod_smul_left]
+  rw [← Measure.map_smul _ (by fun_prop), Measure.prod_smul_left]
 
 @[to_additive]
 theorem mconv_add [MeasurableMul₂ M] (μ : Measure M) (ν : Measure M) (ρ : Measure M) [SFinite μ]
@@ -138,7 +142,7 @@ instance finite_of_finite_mconv (μ : Measure M) (ν : Measure M) [IsFiniteMeasu
   have h : (μ ∗ₘ ν) Set.univ < ⊤ := by
     unfold mconv
     exact IsFiniteMeasure.measure_univ_lt_top
-  exact {measure_univ_lt_top := h}
+  exact { measure_univ_lt_top := h }
 
 /-- Convolution is associative. -/
 @[to_additive /-- Convolution is associative. -/]
@@ -154,9 +158,10 @@ theorem mconv_assoc [MeasurableMul₂ M] (μ ν ρ : Measure M)
 
 @[to_additive]
 instance probabilitymeasure_of_probabilitymeasures_mconv (μ : Measure M) (ν : Measure M)
-    [MeasurableMul₂ M] [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
-    IsProbabilityMeasure (μ ∗ₘ ν) :=
-  isProbabilityMeasure_map (by fun_prop)
+    [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
+    IsProbabilityMeasure (μ ∗ₘ ν) := by
+  rw [mconv]
+  infer_instance
 
 @[to_additive]
 theorem mconv_absolutelyContinuous [MeasurableMul₂ M] {μ ν ρ : Measure M}
@@ -175,7 +180,7 @@ theorem mconv_absolutelyContinuous [MeasurableMul₂ M] {μ ν ρ : Measure M}
 @[to_additive]
 lemma map_mconv_monoidHom {M M' : Type*} {mM : MeasurableSpace M} [Monoid M] [MeasurableMul₂ M]
     {mM' : MeasurableSpace M'} [Monoid M'] [MeasurableMul₂ M']
-    {μ ν : Measure M} [SFinite μ] [SFinite ν]
+    {μ ν : Measure M} [SFinite ν]
     (L : M →* M') (hL : Measurable L) :
     (μ ∗ₘ ν).map L = (μ.map L) ∗ₘ (ν.map L) := by
   unfold mconv
@@ -188,12 +193,12 @@ lemma map_conv_continuousLinearMap {E F : Type*} [AddCommMonoid E] [AddCommMonoi
     [Module ℝ E] [Module ℝ F] [TopologicalSpace E] [TopologicalSpace F]
     {mE : MeasurableSpace E} [MeasurableAdd₂ E] {mF : MeasurableSpace F} [MeasurableAdd₂ F]
     [OpensMeasurableSpace E] [BorelSpace F]
-    {μ ν : Measure E} [SFinite μ] [SFinite ν]
+    {μ ν : Measure E} [SFinite ν]
     (L : E →L[ℝ] F) :
     (μ ∗ ν).map L = (μ.map L) ∗ (ν.map L) := by
   suffices (μ ∗ ν).map (L : E →+ F) = (μ.map (L : E →+ F)) ∗ (ν.map (L : E →+ F)) by simpa
   rw [map_conv_addMonoidHom]
-  rw [AddMonoidHom.coe_coe]
+  rw [AddMonoidHom.coe_ofClass]
   fun_prop
 
 end Measure

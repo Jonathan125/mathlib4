@@ -3,8 +3,10 @@ Copyright (c) 2025 Robin Carlier. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robin Carlier
 -/
-import Mathlib.CategoryTheory.EqToHom
-import Mathlib.CategoryTheory.Bicategory.Basic
+module
+
+public import Mathlib.CategoryTheory.Bicategory.Basic
+public import Mathlib.CategoryTheory.EqToHom
 
 /-!
 # `eqToHom` in bicategories
@@ -31,6 +33,8 @@ well under `eqToHom`s.
 * Define `eqToEquiv` that puts the `eqToHom`s in an `Equivalence` between
   objects.
 -/
+
+@[expose] public section
 
 universe w v u
 
@@ -110,7 +114,7 @@ lemma whiskerRight_congr {y z : B} {g g' : y ⟶ z} (h : g = g') {x : B}
   simp
 
 lemma leftUnitor_hom_congr {x y : B} {f f' : x ⟶ y} (h : f = f') :
-    (λ_ f).hom = 𝟙 _ ◁ (eqToHom h)  ≫ (λ_ f').hom ≫ eqToHom h.symm := by
+    (λ_ f).hom = 𝟙 _ ◁ (eqToHom h) ≫ (λ_ f').hom ≫ eqToHom h.symm := by
   subst h
   simp
 
@@ -120,7 +124,7 @@ lemma leftUnitor_inv_congr {x y : B} {f f' : x ⟶ y} (h : f = f') :
   simp
 
 lemma rightUnitor_hom_congr {x y : B} {f f' : x ⟶ y} (h : f = f') :
-    (ρ_ f).hom = (eqToHom h) ▷ 𝟙 _  ≫ (ρ_ f').hom ≫ eqToHom h.symm := by
+    (ρ_ f).hom = (eqToHom h) ▷ 𝟙 _ ≫ (ρ_ f').hom ≫ eqToHom h.symm := by
   subst h
   simp
 

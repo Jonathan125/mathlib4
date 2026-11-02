@@ -4,10 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nathaniel Thomas, Jeremy Avigad, Johannes Hölzl, Mario Carneiro, Anne Baanen,
   Frédéric Dupuis, Heather Macbeth, Antoine Chambert-Loir
 -/
-import Mathlib.Algebra.Group.Pointwise.Set.Scalar
-import Mathlib.Data.Set.Function
-import Mathlib.GroupTheory.GroupAction.Hom
+module
+
+public import Mathlib.Algebra.Group.Pointwise.Set.Scalar
+public import Mathlib.GroupTheory.GroupAction.Hom
+
 import Mathlib.Algebra.Group.Units.Hom
+import Mathlib.Data.Set.Function
 
 /-!
 # Pointwise actions of equivariant maps
@@ -20,7 +23,7 @@ import Mathlib.Algebra.Group.Units.Hom
   It requires that `c` acts surjectively and `σ c` acts injectively and
   is provided with specific versions:
   - `preimage_smul_setₛₗ_of_isUnit_isUnit` when `c` and `σ c` are units
-  - `IsUnit.preimage_smul_setₛₗ` when `σ` belongs to a `MonoidHomClass`and `c` is a unit
+  - `IsUnit.preimage_smul_setₛₗ` when `σ` belongs to a `MonoidHomClass` and `c` is a unit
   - `MonoidHom.preimage_smul_setₛₗ` when `σ` is a `MonoidHom` and `c` is a unit
   - `Group.preimage_smul_setₛₗ` : when the types of `c` and `σ c` are groups.
 
@@ -28,6 +31,8 @@ import Mathlib.Algebra.Group.Units.Hom
   the variants when `σ` is the identity.
 
 -/
+
+public section
 
 open Function Set Pointwise
 
@@ -76,7 +81,7 @@ section Monoid
 
 variable {M N F : Type*} {α β : Type*} {σ : M → N} [Monoid M] [Monoid N]
   [MulAction M α] [MulAction N β] [FunLike F α β] [MulActionSemiHomClass F σ α β]
-  {f : F} {s : Set α} {t : Set β} {c : M}
+  {f : F} {t : Set β} {c : M}
 
 /-- `preimage_smul_setₛₗ` when both scalars act by unit -/
 @[to_additive]

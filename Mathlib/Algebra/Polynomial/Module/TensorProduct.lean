@@ -3,9 +3,13 @@ Copyright (c) 2025 George McNinch. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: George McNinch
 -/
+module
 
-import Mathlib.Algebra.Polynomial.Module.Basic
-import Mathlib.RingTheory.TensorProduct.Basic
+public import Mathlib.Algebra.Polynomial.Module.Basic
+public import Mathlib.LinearAlgebra.TensorProduct.Lift
+
+set_option doc.verso true
+set_option doc.verso.suggestions false
 
 /-!
 # PolynomialModule is isomorphic to a tensor product
@@ -14,6 +18,8 @@ For a commutative ring `R` and an `R`-module `M`, we obtain an isomorphism betwe
 `R[X] ⊗[R] M` and `PolynomialModule R M` as `R[X]`-modules; this isomorphism is called
 `polynomialTensorProductLEquivPolynomialModule`.
 -/
+
+@[expose] public section
 
 open Polynomial TensorProduct LinearMap
 

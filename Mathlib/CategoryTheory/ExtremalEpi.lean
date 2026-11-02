@@ -3,8 +3,9 @@ Copyright (c) 2025 Joël Riou. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Joël Riou
 -/
-import Mathlib.CategoryTheory.Subobject.Lattice
-import Mathlib.CategoryTheory.Limits.Shapes.StrongEpi
+module
+
+public import Mathlib.CategoryTheory.Subobject.Lattice
 
 /-!
 # Extremal epimorphisms
@@ -22,6 +23,8 @@ the category has pullbacks.
 * https://ncatlab.org/nlab/show/extremal+epimorphism
 
 -/
+
+public section
 
 universe v u
 

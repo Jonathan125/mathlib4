@@ -3,9 +3,10 @@ Copyright (c) 2025 Calle Sönne. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Calle Sönne
 -/
+module
 
-import Mathlib.CategoryTheory.Bicategory.Basic
-import Mathlib.CategoryTheory.Opposites
+public import Mathlib.CategoryTheory.Bicategory.Basic
+public import Mathlib.CategoryTheory.Opposites
 
 /-!
 # Opposite bicategories
@@ -16,12 +17,12 @@ We construct the 1-cell opposite of a bicategory `B`, called `Bᵒᵖ`. It is de
 * The 2-morphisms `f ⟶ g` in `Bᵒᵖ` are the 2-morphisms `f ⟶ g` in `B`. In other words, the
   directions of the 2-morphisms are preserved.
 
-# Remarks
+## Remarks
 There are multiple notions of opposite categories for bicategories.
 - There is 1-cell dual `Bᵒᵖ` as defined above.
-- There is the 2-cell dual, `Cᶜᵒ` where only the natural transformations are reversed
-- There is the bi-dual `Cᶜᵒᵒᵖ` where the directions of both the morphisms and the natural
-  transformations are reversed.
+- There is the 2-cell dual, `Cᶜᵒ` where only the 2-morphisms are reversed
+- There is the bi-dual `Cᶜᵒᵒᵖ` where the directions of both the 1-morphisms and the 2-morphisms
+  are reversed.
 
 ## TODO
 
@@ -31,6 +32,8 @@ There are multiple notions of opposite categories for bicategories.
 Note: `Cᶜᵒᵒᵖ` is WIP by Christian Merten.
 
 -/
+
+@[expose] public section
 
 universe w v u
 
@@ -115,21 +118,17 @@ open Bicategory.Opposite
 variable {B : Type u} [Bicategory.{w, v} B]
 
 /-- A 2-isomorphism in `B` gives a 2-isomorphism in `Bᵒᵖ` -/
-@[simps!]
 abbrev op2 {a b : B} {f g : a ⟶ b} (η : f ≅ g) : f.op ≅ g.op := (opFunctor a b).mapIso η
 
 /-- A 2-isomorphism in `B` gives a 2-isomorphism in `Bᵒᵖ` -/
-@[simps!]
 abbrev op2_unop {a b : Bᵒᵖ} {f g : a ⟶ b} (η : f.unop ≅ g.unop) : f ≅ g :=
   (opFunctor b.unop a.unop).mapIso η
 
 /-- A 2-isomorphism in `Bᵒᵖ` gives a 2-isomorphism in `B` -/
-@[simps!]
 abbrev unop2 {a b : Bᵒᵖ} {f g : a ⟶ b} (η : f ≅ g) : f.unop ≅ g.unop :=
   (unopFunctor a b).mapIso η
 
 /-- A 2-isomorphism in `Bᵒᵖ` gives a 2-isomorphism in `B` -/
-@[simps!]
 abbrev unop2_op {a b : B} {f g : a ⟶ b} (η : f.op ≅ g.op) : f ≅ g :=
   (unopFunctor (op b) (op a)).mapIso η
 
@@ -162,7 +161,7 @@ instance bicategory : Bicategory.{w, v} Bᵒᵖ where
   associator f g h := (associator h.unop g.unop f.unop).op2_unop.symm
   leftUnitor f := (rightUnitor f.unop).op2_unop
   rightUnitor f := (leftUnitor f.unop).op2_unop
-  whisker_exchange η θ := congrArg op2 <| (whisker_exchange _ _).symm
+  whisker_exchange η θ := congrArg op2 (whisker_exchange _ _).symm
   whisker_assoc f g g' η i := congrArg op2 <| by simp
   pentagon f g h i := congrArg op2 <| by simp
   triangle f g := congrArg op2 <| by simp

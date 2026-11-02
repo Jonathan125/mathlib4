@@ -3,9 +3,11 @@ Copyright (c) 2023 Sébastien Gouëzel. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Sébastien Gouëzel
 -/
-import Mathlib.Algebra.Central.Defs
-import Mathlib.Analysis.LocallyConvex.SeparatingDual
-import Mathlib.Analysis.NormedSpace.Multilinear.Basic
+module
+
+public import Mathlib.Analysis.LocallyConvex.SeparatingDual
+public import Mathlib.Analysis.Normed.Module.Multilinear.Basic
+
 import Mathlib.LinearAlgebra.Dual.Lemmas
 
 /-! # Completeness of spaces of linear and multilinear maps
@@ -16,6 +18,8 @@ linear maps from `E` to `F` is equivalent to the completeness of `F`.
 
 A similar statement holds for spaces of continuous multilinear maps
 -/
+
+public section
 
 open Filter
 open scoped Topology
@@ -33,13 +37,13 @@ lemma completeSpace_of_completeSpace_continuousLinearMap [CompleteSpace (E →L[
   obtain ⟨v, hv⟩ : ∃ (v : E), v ≠ 0 := exists_ne 0
   obtain ⟨φ, hφ⟩ : ∃ φ : StrongDual 𝕜 E, φ v = 1 := exists_eq_one hv
   let g : ℕ → (E →L[𝕜] F) := fun n ↦ ContinuousLinearMap.smulRightL 𝕜 E F φ (f n)
-  have : CauchySeq g := (ContinuousLinearMap.smulRightL 𝕜 E F φ).lipschitz.cauchySeq_comp hf
+  have : CauchySeq g := (ContinuousLinearMap.smulRightL 𝕜 E F φ).lipschitzWith.cauchySeq_comp hf
   obtain ⟨a, ha⟩ : ∃ a, Tendsto g atTop (𝓝 a) := cauchy_iff_exists_le_nhds.mp this
   refine ⟨a v, ?_⟩
   have : Tendsto (fun n ↦ g n v) atTop (𝓝 (a v)) := by
     have : Continuous (fun (i : E →L[𝕜] F) ↦ i v) := by fun_prop
     exact (this.tendsto _).comp ha
-  simpa [g, ContinuousLinearMap.smulRightL, hφ]
+  simpa [g, hφ]
 
 lemma completeSpace_continuousLinearMap_iff :
     CompleteSpace (E →L[𝕜] F) ↔ CompleteSpace F :=
@@ -63,8 +67,8 @@ lemma completeSpace_of_completeSpace_continuousMultilinearMap
     compContinuousLinearMapL φ
     (ContinuousMultilinearMap.smulRightL 𝕜 _ F ((ContinuousMultilinearMap.mkPiAlgebra 𝕜 ι 𝕜)) (f n))
   have : CauchySeq g := by
-    refine (ContinuousLinearMap.lipschitz _).cauchySeq_comp ?_
-    exact (ContinuousLinearMap.lipschitz _).cauchySeq_comp hf
+    refine (ContinuousLinearMap.lipschitzWith _).cauchySeq_comp ?_
+    exact (ContinuousLinearMap.lipschitzWith _).cauchySeq_comp hf
   obtain ⟨a, ha⟩ : ∃ a, Tendsto g atTop (𝓝 a) := cauchy_iff_exists_le_nhds.mp this
   refine ⟨a m, ?_⟩
   have : Tendsto (fun n ↦ g n m) atTop (𝓝 (a m)) := ((continuous_eval_const _).tendsto _).comp ha

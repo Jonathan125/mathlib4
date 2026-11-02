@@ -3,9 +3,12 @@ Copyright (c) 2018 Kenny Lau. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kenny Lau, Mario Carneiro, Johan Commelin, Amelia Livingston, Anne Baanen
 -/
-import Mathlib.RingTheory.Localization.FractionRing
-import Mathlib.RingTheory.Localization.Integer
-import Mathlib.RingTheory.UniqueFactorizationDomain.GCDMonoid
+module
+
+public import Mathlib.Algebra.Squarefree.Basic
+public import Mathlib.RingTheory.Localization.FractionRing
+public import Mathlib.RingTheory.Localization.Integer
+public import Mathlib.RingTheory.UniqueFactorizationDomain.GCDMonoid
 
 /-!
 # Numerator and denominator in a localization
@@ -18,6 +21,8 @@ See `Mathlib/RingTheory/Localization/Basic.lean` for a design overview.
 localization, ring localization, commutative ring localization, characteristic predicate,
 commutative ring, field of fractions
 -/
+
+@[expose] public section
 
 
 namespace IsFractionRing
@@ -38,7 +43,7 @@ theorem exists_reduced_fraction (x : K) :
   obtain ⟨_, b'_nonzero⟩ := mul_mem_nonZeroDivisors.mp b_nonzero
   refine ⟨a', ⟨b', b'_nonzero⟩, no_factor, ?_⟩
   refine mul_left_cancel₀ (IsFractionRing.to_map_ne_zero_of_mem_nonZeroDivisors b_nonzero) ?_
-  simp only [RingHom.map_mul, Algebra.smul_def] at *
+  simp only [map_mul, Algebra.smul_def] at *
   rw [← hab, mul_assoc, mk'_spec' _ a' ⟨b', b'_nonzero⟩]
 
 /-- `f.num x` is the numerator of `x : f.codomain` as a reduced fraction. -/
@@ -78,7 +83,7 @@ theorem num_mul_den_eq_num_mul_den_iff_eq {x y : K} :
   ⟨fun h ↦ by simpa only [mk'_num_den] using mk'_eq_of_eq' (S := K) h, fun h ↦ by rw [h]⟩
 
 theorem eq_zero_of_num_eq_zero {x : K} (h : num A x = 0) : x = 0 :=
-  (num_mul_den_eq_num_iff_eq' (A := A)).mp (by rw [zero_mul, h, RingHom.map_zero])
+  (num_mul_den_eq_num_iff_eq' (A := A)).mp (by rw [zero_mul, h, map_zero])
 
 @[simp]
 lemma num_zero : IsFractionRing.num A (0 : K) = 0 := by
@@ -110,9 +115,7 @@ theorem isUnit_den_iff (x : K) : IsUnit (den A x : A) ↔ IsLocalization.IsInteg
     · simp only [map_mul, h]
       rw [mul_comm, ← div_eq_iff]
       · simp only [mk'_num_den']
-      intro h
-      replace h : algebraMap A K (den A x : A) = algebraMap A K 0 := by convert h; simp
-      exact nonZeroDivisors.coe_ne_zero _ <| FaithfulSMul.algebraMap_injective A K h
+      simp
     exact FaithfulSMul.algebraMap_injective A K
 
 theorem isUnit_den_zero : IsUnit (den A (0 : K) : A) := by
@@ -134,6 +137,31 @@ lemma associated_num_den_inv (x : K) (hx : x ≠ 0) : Associated (num A x : A) (
     (associated_den_num_inv x⁻¹ (inv_ne_zero hx)).symm
   rw [inv_inv] at this
   exact this
+
+variable (A) in
+theorem num_den_unique (x : K) (n : A) (d : nonZeroDivisors A) (pr : IsRelPrime n d)
+    (h : IsLocalization.mk' K n d = x) :
+    Associated (num A x) n ∧ Associated (den A x : A) d := by
+  rw [← IsFractionRing.mk'_num_den A x, IsLocalization.mk'_eq_iff_eq',
+    (FaithfulSMul.algebraMap_injective _ _).eq_iff] at h
+  refine ⟨associated_of_dvd_dvd
+      ((num_den_reduced A x).dvd_of_dvd_mul_right <| h ▸ dvd_mul_right _ _)
+      (pr.dvd_of_dvd_mul_right <| h ▸ dvd_mul_right _ _),
+    associated_of_dvd_dvd
+      ((num_den_reduced A x).symm.dvd_of_dvd_mul_left <| h ▸ dvd_mul_left _ _)
+      (pr.symm.dvd_of_dvd_mul_left <| h ▸ dvd_mul_left _ _)⟩
+
+
+variable (A) in
+/-- Every element of the fraction field of a unique factorization domain is a square times a
+squarefree element. -/
+theorem exists_sq_mul_squarefree (q : K) :
+    ∃ (r : K) (d : A), r ^ 2 * algebraMap A K d = q ∧ Squarefree d := by
+  obtain ⟨x, y, hy, rfl⟩ := div_surjective A q
+  obtain ⟨e, d, hed, hd⟩ := _root_.exists_sq_mul_squarefree (x * y)
+  refine ⟨algebraMap A K e / algebraMap A K y, d, ?_, hd⟩
+  rw [div_pow, div_mul_eq_mul_div, ← map_pow, ← map_mul, hed, map_mul, sq,
+    mul_div_mul_right _ _ (IsFractionRing.to_map_ne_zero_of_mem_nonZeroDivisors hy)]
 
 end NumDen
 

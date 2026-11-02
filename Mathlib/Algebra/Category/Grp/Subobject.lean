@@ -3,12 +3,20 @@ Copyright (c) 2021 Markus Himmel. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Markus Himmel
 -/
+module
+
+public import Mathlib.Algebra.Category.ModuleCat.Subobject
+
 import Mathlib.Algebra.Category.Grp.ZModuleEquivalence
-import Mathlib.Algebra.Category.ModuleCat.Subobject
+
+set_option doc.verso true
+set_option doc.verso.suggestions false
 
 /-!
 # The category of abelian groups is well-powered
 -/
+
+public section
 
 
 open CategoryTheory

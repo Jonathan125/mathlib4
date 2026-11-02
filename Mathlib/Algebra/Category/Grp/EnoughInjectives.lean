@@ -3,11 +3,12 @@ Copyright (c) 2023 Jujian Zhang. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jujian Zhang, Junyan Xu
 -/
+module
 
-import Mathlib.Algebra.Module.CharacterModule
-import Mathlib.Algebra.Category.Grp.EquivalenceGroupAddGroup
+public import Mathlib.Algebra.Module.CharacterModule
+
 import Mathlib.Algebra.Category.Grp.EpiMono
-import Mathlib.Algebra.Category.Grp.Injective
+import Mathlib.Algebra.Category.Grp.EquivalenceGroupAddGroup
 
 /-!
 
@@ -25,8 +26,10 @@ injective presentation for `A`, hence category of abelian groups has enough inje
 
 ## Implementation notes
 
-This file is split from `Mathlib/Algebra/Category/GrpCat/Injective.lean` to prevent import loops.
+This file is split from `Mathlib/Algebra/Category/Grp/Injective.lean` to prevent import loops.
 -/
+
+public section
 
 open CategoryTheory
 
@@ -42,7 +45,7 @@ instance enoughInjectives : EnoughInjectives AddCommGrpCat.{u} where
       injective := injective_of_divisible _
       f := ofHom ⟨⟨fun a i ↦ ULift.up (i a), by aesop⟩, by aesop⟩
       mono := (AddCommGrpCat.mono_iff_injective _).mpr <| (injective_iff_map_eq_zero _).mpr
-        fun _ h0 ↦ eq_zero_of_character_apply (congr_arg ULift.down <| congr_fun h0 ·) }
+        fun _ h0 ↦ eq_zero_of_character_apply (congr(ULift.down <| $h0 ·)) }
 
 end AddCommGrpCat
 

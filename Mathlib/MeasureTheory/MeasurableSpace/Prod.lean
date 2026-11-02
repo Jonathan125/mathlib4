@@ -3,8 +3,13 @@ Copyright (c) 2020 Floris van Doorn. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Floris van Doorn
 -/
-import Mathlib.MeasureTheory.MeasurableSpace.Embedding
-import Mathlib.MeasureTheory.PiSystem
+module
+
+public import Mathlib.MeasureTheory.MeasurableSpace.Embedding
+public import Mathlib.MeasureTheory.PiSystem
+
+set_option doc.verso true
+set_option doc.verso.suggestions false
 
 /-!
 # The product sigma algebra
@@ -12,9 +17,9 @@ import Mathlib.MeasureTheory.PiSystem
 This file talks about the measurability of operations on binary functions.
 -/
 
-assert_not_exists MeasureTheory.Measure
+public section
 
-noncomputable section
+assert_not_exists MeasureTheory.Measure
 
 open Set MeasurableSpace
 

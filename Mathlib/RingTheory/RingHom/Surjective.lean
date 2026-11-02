@@ -3,7 +3,9 @@ Copyright (c) 2022 Andrew Yang. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Andrew Yang
 -/
-import Mathlib.RingTheory.LocalProperties.Basic
+module
+
+public import Mathlib.RingTheory.LocalProperties.Basic
 
 /-!
 
@@ -20,6 +22,8 @@ Let `R` be a commutative ring, `M` be a submonoid of `R`.
   surjective homomorphism `R_{f⁻¹(P)} →+* S_P` for every prime ideal `P` of `S`.
 
 -/
+
+public section
 
 
 namespace RingHom
@@ -43,10 +47,8 @@ theorem surjective_respectsIso : RespectsIso surjective := by
 
 theorem surjective_isStableUnderBaseChange : IsStableUnderBaseChange surjective := by
   refine IsStableUnderBaseChange.mk surjective_respectsIso ?_
-  classical
   introv h x
   induction x with
-  | zero => exact ⟨0, map_zero _⟩
   | tmul x y =>
     obtain ⟨y, rfl⟩ := h y; use y • x; dsimp
     rw [TensorProduct.smul_tmul, Algebra.algebraMap_eq_smul_one]
@@ -66,7 +68,7 @@ theorem surjective_localizationPreserves :
 theorem surjective_ofLocalizationSpan : OfLocalizationSpan surjective := by
   introv R e H
   rw [← Set.range_eq_univ, Set.eq_univ_iff_forall]
-  letI := f.toAlgebra
+  let := f.toAlgebra
   intro x
   apply Submodule.mem_of_span_eq_top_of_smul_pow_mem
     (LinearMap.range (Algebra.linearMap R S)) s e

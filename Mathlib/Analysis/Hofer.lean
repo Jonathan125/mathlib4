@@ -3,7 +3,9 @@ Copyright (c) 2020 Patrick Massot. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Patrick Massot
 -/
-import Mathlib.Analysis.SpecificLimits.Basic
+module
+
+public import Mathlib.Analysis.SpecificLimits.Basic
 
 /-!
 # Hofer's lemma
@@ -18,7 +20,11 @@ example of a proof needing to construct a sequence by induction in the middle of
 * H. Hofer and C. Viterbo, *The Weinstein conjecture in the presence of holomorphic spheres*
 -/
 
-open Topology Filter Finset
+public section
+
+open Filter Finset
+
+open scoped Topology
 
 local notation "d" => dist
 
@@ -35,8 +41,8 @@ theorem hofer {X : Type*} [MetricSpace X] [CompleteSpace X] (x : X) (ε : ℝ) (
       ∃ y, d x' y ≤ ε / 2 ^ k ∧ 2 * ϕ x' < ϕ y := by
     intro k x'
     have := H (ε / 2 ^ k) (by positivity) x' (div_le_self ε_pos.le <| one_le_pow₀ one_le_two)
-    simpa [reformulation] using this
-  haveI : Nonempty X := ⟨x⟩
+    simpa [reformulation] using! this
+  have : Nonempty X := ⟨x⟩
   choose! F hF using H
   -- Use the axiom of choice
   -- Now define u by induction starting at x, with u_{n+1} = F(n, u_n)
@@ -51,8 +57,8 @@ theorem hofer {X : Type*} [MetricSpace X] [CompleteSpace X] (x : X) (ε : ℝ) (
   have key : ∀ n, d (u n) (u (n + 1)) ≤ ε / 2 ^ n ∧ 2 * ϕ (u n) < ϕ (u (n + 1)) := by
     intro n
     induction n using Nat.case_strong_induction_on with
-    | hz => simpa [u, ε_pos.le] using hu 0
-    | hi n IH =>
+    | zero => simpa [u, ε_pos.le] using! hu 0
+    | succ n IH =>
       have A : d (u (n + 1)) x ≤ 2 * ε := by
         rw [dist_comm]
         let r := range (n + 1) -- range (n+1) = {0, ..., n}
@@ -73,7 +79,7 @@ theorem hofer {X : Type*} [MetricSpace X] [CompleteSpace X] (x : X) (ε : ℝ) (
   -- Hence u is Cauchy
   have cauchy_u : CauchySeq u := by
     refine cauchySeq_of_le_geometric _ ε one_half_lt_one fun n => ?_
-    simpa only [one_div, inv_pow] using key₁ n
+    simpa only [one_div, inv_pow] using! key₁ n
   -- So u converges to some y
   obtain ⟨y, limy⟩ : ∃ y, Tendsto u atTop (𝓝 y) := CompleteSpace.complete cauchy_u
   -- And ϕ ∘ u goes to +∞
@@ -82,7 +88,7 @@ theorem hofer {X : Type*} [MetricSpace X] [CompleteSpace X] (x : X) (ε : ℝ) (
     suffices Tendsto v atTop atTop by rwa [tendsto_add_atTop_iff_nat] at this
     have hv₀ : 0 < v 0 := by
       calc
-        0 ≤ 2 * ϕ (u 0) := by specialize nonneg x; positivity
+        0 ≤ 2 * ϕ (u 0) := by specialize nonneg (u 0); positivity
         _ < ϕ (u (0 + 1)) := key₂ 0
     apply tendsto_atTop_of_geom_le hv₀ one_lt_two
     exact fun n => (key₂ (n + 1)).le

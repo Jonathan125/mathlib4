@@ -3,9 +3,15 @@ Copyright (c) 2025 Yaël Dillies. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yaël Dillies
 -/
-import Mathlib.Algebra.Field.Defs
+module
+
+public import Mathlib.Algebra.Field.Defs
+public import Mathlib.Algebra.Module.Torsion.Free
+
 import Mathlib.Algebra.GroupWithZero.Action.Units
-import Mathlib.Algebra.Module.Torsion.Free
+
+set_option doc.verso true
+set_option doc.verso.suggestions false
 
 /-!
 # Vector spaces are torsion-free
@@ -14,6 +20,8 @@ In this file, we show that any module over a division semiring is torsion-free.
 
 Note that more generally any reflexive module is torsion-free.
 -/
+
+public section
 
 open Module
 

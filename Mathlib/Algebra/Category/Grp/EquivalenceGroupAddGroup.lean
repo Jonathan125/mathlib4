@@ -3,7 +3,9 @@ Copyright (c) 2022 Jujian Zhang. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jujian Zhang
 -/
-import Mathlib.Algebra.Category.Grp.Basic
+module
+
+public import Mathlib.Algebra.Category.Grp.Basic
 
 /-!
 # Equivalence between `Group` and `AddGroup`
@@ -15,6 +17,8 @@ This file contains two equivalences:
   by sending `X : CommGrpCat` to `Additive X` and `Y : AddCommGrpCat` to `Multiplicative Y`.
 -/
 
+@[expose] public section
+
 
 open CategoryTheory
 
@@ -24,7 +28,7 @@ namespace GrpCat
 -/
 @[simps]
 def toAddGrp : GrpCat ⥤ AddGrpCat where
-  obj X := AddGrpCat.of (Additive X)
+  obj X := ↧(Additive X)
   map {_} {_} f := AddGrpCat.ofHom f.hom.toAdditive
 
 end GrpCat
@@ -35,7 +39,7 @@ namespace CommGrpCat
 -/
 @[simps]
 def toAddCommGrp : CommGrpCat ⥤ AddCommGrpCat where
-  obj X := AddCommGrpCat.of (Additive X)
+  obj X := ↧(Additive X)
   map {_} {_} f := AddCommGrpCat.ofHom f.hom.toAdditive
 
 end CommGrpCat
@@ -46,7 +50,7 @@ namespace AddGrpCat
 -/
 @[simps]
 def toGrp : AddGrpCat ⥤ GrpCat where
-  obj X := GrpCat.of (Multiplicative X)
+  obj X := ↧(Multiplicative X)
   map {_} {_} f := GrpCat.ofHom f.hom.toMultiplicative
 
 end AddGrpCat
@@ -57,7 +61,7 @@ namespace AddCommGrpCat
 -/
 @[simps]
 def toCommGrp : AddCommGrpCat ⥤ CommGrpCat where
-  obj X := CommGrpCat.of (Multiplicative X)
+  obj X := ↧(Multiplicative X)
   map {_} {_} f := CommGrpCat.ofHom f.hom.toMultiplicative
 
 end AddCommGrpCat

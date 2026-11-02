@@ -3,12 +3,20 @@ Copyright (c) 2023 Kim Morrison. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison, Patrick Massot, Kyle Miller
 -/
+module
+
+public import Lean.Meta.Tactic.Rewrite
+
 import Mathlib.Init
-import Lean.Meta.Tactic.Rewrite
+
+set_option doc.verso true
+set_option doc.verso.suggestions false
 
 /-!
 # Additional declarations for `Lean.Meta.Tactic.Rewrite`
 -/
+
+public section
 
 namespace Lean.Expr
 

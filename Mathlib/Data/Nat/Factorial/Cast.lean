@@ -3,8 +3,10 @@ Copyright (c) 2021 Yaël Dillies. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yaël Dillies
 -/
-import Mathlib.Data.Nat.Cast.Basic
-import Mathlib.Data.Nat.Factorial.Basic
+module
+
+public import Mathlib.Data.Nat.Cast.Basic
+public import Mathlib.Data.Nat.Factorial.Basic
 
 /-!
 # Cast of factorials
@@ -18,6 +20,8 @@ to subtraction on a general semiring. For example, we can't rely on existing cas
 to `↑a - 1`, the other factor is `0` anyway.
 -/
 
+public section
+
 
 open Nat
 
@@ -27,7 +31,7 @@ namespace Nat
 
 section Ring
 
-variable [Ring S] (a b : ℕ)
+variable [Ring S] (a : ℕ)
 
 /-- Convenience lemma. The `a - 1` is not using truncated subtraction, as opposed to the definition
 of `Nat.descFactorial` as a natural. -/

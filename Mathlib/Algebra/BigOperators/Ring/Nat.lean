@@ -3,9 +3,12 @@ Copyright (c) 2024 Pim Otte. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Pim Otte
 -/
+module
+
+public import Mathlib.Data.Set.Finite.Lattice
+public import Mathlib.SetTheory.Cardinal.Finite
+
 import Mathlib.Algebra.BigOperators.Group.Finset.Lemmas
-import Mathlib.Data.Set.Finite.Lattice
-import Mathlib.SetTheory.Cardinal.Finite
 
 /-!
 # Big operators on a finset in the natural numbers
@@ -13,6 +16,8 @@ import Mathlib.SetTheory.Cardinal.Finite
 This file contains the results concerning the interaction of finset big operators with natural
 numbers.
 -/
+
+public section
 
 variable {ι : Type*}
 
@@ -45,8 +50,8 @@ theorem card_preimage_eq_sum_card_image_eq {M : Type*} {f : ι → M} {s : Finse
   · simpa [← Finset.coe_inj, t] using Set.image_preimage_eq_inter_range
   · rw [Nat.card_eq_card_finite_toFinset (hb _ (by aesop))]
     suffices {a | f a = m} ⊆ ht.toFinset from
-      congr_arg (Finset.card ·) (Finset.ext_iff.mpr fun a ↦ by simpa using fun h ↦ this h)
+      congr($(Finset.ext_iff.mpr fun a ↦ by simpa using fun h ↦ this h).card)
     intro _ h
-    simpa using by rwa [h]
+    simp_all
 
 end Finset

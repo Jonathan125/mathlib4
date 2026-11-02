@@ -3,8 +3,11 @@ Copyright (c) 2024 Dagur Asgeirsson. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Dagur Asgeirsson
 -/
-import Mathlib.Topology.Compactification.OnePoint.Basic
-import Mathlib.Topology.Category.LightProfinite.Basic
+module
+
+public import Mathlib.Topology.Category.LightProfinite.Basic
+public import Mathlib.Topology.Compactification.OnePoint.Basic
+
 /-!
 
 # The light profinite set classifying convergent sequences
@@ -12,6 +15,8 @@ import Mathlib.Topology.Category.LightProfinite.Basic
 This file defines the light profinite set `ℕ∪{∞}`, defined as the one point compactification of
 `ℕ`.
 -/
+
+@[expose] public section
 
 open CategoryTheory OnePoint TopologicalSpace Topology
 
@@ -51,9 +56,13 @@ abbrev NatUnionInfty : LightProfinite := of (OnePoint ℕ)
 @[inherit_doc]
 scoped notation "ℕ∪{∞}" => NatUnionInfty
 
+instance : Countable ℕ∪{∞} := (inferInstance : Countable <| Option _)
+
 instance : Coe ℕ ℕ∪{∞} := optionCoe
 
-open Filter Topology
+open Filter
+
+open scoped Topology
 
 lemma continuous_iff_convergent {Y : Type*} [TopologicalSpace Y] (f : ℕ∪{∞} → Y) :
     Continuous f ↔ Tendsto (fun x : ℕ ↦ f x) atTop (𝓝 (f ∞)) :=

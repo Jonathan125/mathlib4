@@ -3,8 +3,13 @@ Copyright (c) 2018 Mario Carneiro. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Mario Carneiro
 -/
-import Mathlib.Data.Nat.Bits
-import Mathlib.Data.Nat.Pairing
+module
+
+public import Mathlib.Data.Nat.Bits
+public import Mathlib.Data.Nat.Pairing
+
+set_option doc.verso true
+set_option doc.verso.suggestions false
 
 /-!
 # Equivalences involving `ℕ`
@@ -12,6 +17,8 @@ import Mathlib.Data.Nat.Pairing
 This file defines some additional constructive equivalences using `Encodable` and the pairing
 function on `ℕ`.
 -/
+
+@[expose] public section
 
 assert_not_exists Monoid
 
@@ -26,7 +33,7 @@ variable {α : Type*}
 @[simps]
 def boolProdNatEquivNat : Bool × ℕ ≃ ℕ where
   toFun := uncurry bit
-  invFun := boddDiv2
+  invFun n := ⟨n.bodd, n.div2⟩
   left_inv := fun ⟨b, n⟩ => by simp
   right_inv n := by simp
 

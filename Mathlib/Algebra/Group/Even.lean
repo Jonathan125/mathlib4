@@ -3,10 +3,11 @@ Copyright (c) 2022 Damiano Testa. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Damiano Testa
 -/
-import Mathlib.Algebra.Group.Equiv.Basic
-import Mathlib.Algebra.Group.Equiv.Opposite
-import Mathlib.Algebra.Group.TypeTags.Basic
-import Mathlib.Data.Set.Operations
+module
+
+public import Mathlib.Algebra.Group.Equiv.Opposite
+public import Mathlib.Algebra.Group.TypeTags.Basic
+public import Mathlib.Data.Set.Operations
 
 /-!
 # Squares and even elements
@@ -37,6 +38,8 @@ This file defines square and even elements in a monoid.
 `Even` / `IsSquare` in rings.
 -/
 
+@[expose] public section
+
 assert_not_exists MonoidWithZero DenselyOrdered
 
 open MulOpposite
@@ -51,6 +54,9 @@ for some root `r : α`. -/
 @[to_additive /-- An element `a` of a type `α` with addition satisfies `Even a` if `a = r + r`,
 for some `r : α`. -/]
 def IsSquare (a : α) : Prop := ∃ r, a = r * r
+
+attribute [oeis A000290] IsSquare
+attribute [oeis A005843] Even
 
 @[to_additive]
 lemma isSquare_iff_exists_mul_self (a : α) : IsSquare a ↔ ∃ r, a = r * r := .rfl

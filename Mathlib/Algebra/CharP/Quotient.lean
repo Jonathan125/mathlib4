@@ -3,14 +3,21 @@ Copyright (c) 2020 Kenny Lau. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kenny Lau, Eric Wieser
 -/
-import Mathlib.GroupTheory.OrderOfElement
-import Mathlib.RingTheory.Ideal.Maps
-import Mathlib.RingTheory.Ideal.Nonunits
-import Mathlib.RingTheory.Ideal.Quotient.Defs
+module
+
+public import Mathlib.GroupTheory.OrderOfElement
+public import Mathlib.RingTheory.Ideal.Maps
+public import Mathlib.RingTheory.Ideal.Nonunits
+public import Mathlib.RingTheory.Ideal.Quotient.Defs
+
+set_option doc.verso true
+set_option doc.verso.suggestions false
 
 /-!
 # Characteristic of quotient rings
 -/
+
+public section
 
 theorem CharP.ker_intAlgebraMap_eq_span
     {R : Type*} [Ring R] (p : ℕ) [CharP R p] :
@@ -68,5 +75,5 @@ theorem Ideal.Quotient.index_eq_zero (I : Ideal R) : (↑I.toAddSubgroup.index :
   rw [AddSubgroup.index, Nat.card_eq]
   split_ifs with hq; swap
   · simp
-  letI : Fintype (R ⧸ I) := @Fintype.ofFinite _ hq
+  let : Fintype (R ⧸ I) := @Fintype.ofFinite _ hq
   exact Nat.cast_card_eq_zero (R ⧸ I)

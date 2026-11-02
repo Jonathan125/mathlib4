@@ -3,8 +3,11 @@ Copyright (c) 2025 Yongshun Ye. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yongshun Ye
 -/
+module
+
+public import Mathlib.Data.Nat.Prime.Defs
+
 import Mathlib.Data.Nat.GCD.Basic
-import Mathlib.Data.Nat.Prime.Defs
 
 /-!
 # Lemmas related to `Nat.Prime` and `lcm`
@@ -19,6 +22,8 @@ These lemmas are kept separate from `Mathlib/Data/Nat/GCD/Basic.lean` in order t
 - `Nat.Prime.not_dvd_lcm`: If `p ∤ a` and `p ∤ b`, then `p ∤ lcm a b`.
 
 -/
+
+public section
 
 namespace Nat
 

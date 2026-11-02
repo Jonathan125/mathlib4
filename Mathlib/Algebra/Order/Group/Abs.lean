@@ -3,9 +3,11 @@ Copyright (c) 2016 Jeremy Avigad. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jeremy Avigad, Leonardo de Moura, Mario Carneiro, Johannes Hölzl
 -/
-import Mathlib.Algebra.Order.Group.Defs
-import Mathlib.Algebra.Order.Group.Unbundled.Abs
-import Mathlib.Algebra.Order.Monoid.Unbundled.Pow
+module
+
+public import Mathlib.Algebra.Order.Group.Defs
+public import Mathlib.Algebra.Order.Group.Unbundled.Abs
+public import Mathlib.Algebra.Order.Monoid.Unbundled.Pow
 
 /-!
 # Absolute values in ordered groups
@@ -19,7 +21,7 @@ negation. This generalizes the usual absolute value on real numbers (`|x| = max 
 - `|a|ₘ`: The *absolute value* of an element `a` of a multiplicative lattice ordered group
 -/
 
-open Function
+public section
 
 variable {G : Type*}
 
@@ -70,8 +72,6 @@ theorem inv_le_of_mabs_le (h : |a|ₘ ≤ b) : b⁻¹ ≤ a :=
 theorem le_of_mabs_le (h : |a|ₘ ≤ b) : a ≤ b :=
   (mabs_le.mp h).2
 
-@[deprecated (since := "2025-08-14")] alias mabs_mul := mabs_mul_le
-
 @[to_additive]
 theorem mabs_mul' (a b : G) : |a|ₘ ≤ |b|ₘ * |b * a|ₘ := by simpa using mabs_mul_le b⁻¹ (b * a)
 
@@ -90,7 +90,7 @@ theorem mabs_div_lt_iff : |a / b|ₘ < c ↔ a / b < c ∧ b / a < c := by
 
 @[to_additive]
 theorem div_le_of_mabs_div_le_left (h : |a / b|ₘ ≤ c) : b / c ≤ a :=
-  div_le_comm.1 <| (mabs_div_le_iff.1 h).2
+  div_le_comm.1 (mabs_div_le_iff.1 h).2
 
 @[to_additive]
 theorem div_le_of_mabs_div_le_right (h : |a / b|ₘ ≤ c) : a / c ≤ b :=
@@ -98,7 +98,7 @@ theorem div_le_of_mabs_div_le_right (h : |a / b|ₘ ≤ c) : a / c ≤ b :=
 
 @[to_additive]
 theorem div_lt_of_mabs_div_lt_left (h : |a / b|ₘ < c) : b / c < a :=
-  div_lt_comm.1 <| (mabs_div_lt_iff.1 h).2
+  div_lt_comm.1 (mabs_div_lt_iff.1 h).2
 
 @[to_additive]
 theorem div_lt_of_mabs_div_lt_right (h : |a / b|ₘ < c) : a / c < b :=
@@ -110,6 +110,10 @@ theorem mabs_div_mabs_le_mabs_div (a b : G) : |a|ₘ / |b|ₘ ≤ |a / b|ₘ :=
     calc
       |a|ₘ = |a / b * b|ₘ := by rw [div_mul_cancel]
       _ ≤ |a / b|ₘ * |b|ₘ := mabs_mul_le _ _
+
+@[to_additive]
+theorem mabs_div_mabs_le_mabs_mul (a b : G) : |a|ₘ / |b|ₘ ≤ |a * b|ₘ :=
+  mabs_inv b ▸ div_inv_eq_mul a b ▸ mabs_div_mabs_le_mabs_div a b⁻¹
 
 @[to_additive]
 theorem mabs_mabs_div_mabs_le_mabs_div (a b : G) : |(|a|ₘ / |b|ₘ)|ₘ ≤ |a / b|ₘ :=
@@ -239,7 +243,7 @@ end LinearOrderedCommGroup
 
 section LinearOrderedAddCommGroup
 
-variable [AddCommGroup G] [LinearOrder G] [IsOrderedAddMonoid G] {a b c : G}
+variable [AddCommGroup G] [LinearOrder G] [IsOrderedAddMonoid G] {a : G}
 
 @[to_additive]
 theorem apply_abs_le_mul_of_one_le' {H : Type*} [MulOneClass H] [LE H]

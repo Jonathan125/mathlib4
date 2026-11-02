@@ -3,7 +3,10 @@ Copyright (c) 2025 Joël Riou. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Joël Riou
 -/
-import Mathlib.CategoryTheory.GuitartExact.Basic
+module
+
+public import Mathlib.CategoryTheory.GuitartExact.Basic
+
 import Mathlib.CategoryTheory.Limits.Preserves.Shapes.BinaryProducts
 
 /-!
@@ -24,6 +27,8 @@ We show that this square is Guitart exact if for all `Y : C`, the binary product
 exists and `F` commutes with it.
 
 -/
+
+public section
 
 universe v₁ v₂ u₁ u₂
 

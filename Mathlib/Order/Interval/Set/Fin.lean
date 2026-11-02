@@ -3,8 +3,12 @@ Copyright (c) 2025 Yury Kudryashov. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yury Kudryashov
 -/
-import Mathlib.Order.Fin.Basic
-import Mathlib.Order.Interval.Set.UnorderedInterval
+module
+
+public import Mathlib.Order.Fin.Basic
+public import Mathlib.Order.Interval.Set.UnorderedInterval
+
+import Mathlib.Logic.Equiv.Set
 
 /-!
 # (Pre)images of set intervals under `Fin` operations
@@ -22,6 +26,8 @@ under the following operations:
 - `Fin.succ`,
 - `Fin.rev`.
 -/
+
+public section
 
 open Function Set
 
@@ -90,6 +96,14 @@ theorem image_val_Ioo (i j : Fin n) : (↑) '' Ioo i j = Ioo (i : ℕ) j := by
 @[simp] theorem image_val_uIcc (i j : Fin n) : (↑) '' uIcc i j = uIcc (i : ℕ) j := by simp [uIcc]
 @[simp] theorem image_val_uIoc (i j : Fin n) : (↑) '' uIoc i j = uIoc (i : ℕ) j := by simp [uIoc]
 @[simp] theorem image_val_uIoo (i j : Fin n) : (↑) '' uIoo i j = uIoo (i : ℕ) j := by simp [uIoo]
+
+lemma ofNat_injOn_Iio {n m : ℕ} [NeZero n] (hmn : m ≤ n) :
+    Set.InjOn (Fin.ofNat n) (Set.Iio m) := by
+  intro i ha j hb _
+  simp only [mem_Iio] at ha hb
+  have hi : i < n := by lia
+  have hj : j < n := by lia
+  grind [Fin.val_ofNat, Nat.mod_eq_of_lt hi, Nat.mod_eq_of_lt hj]
 
 /-!
 ### Preimages under `Fin.castLE`
@@ -467,7 +481,7 @@ theorem range_natAdd (m n : ℕ) : range (natAdd m : Fin n → Fin (m + n)) = {i
   constructor
   · rintro ⟨i, rfl⟩
     apply le_coe_natAdd
-  · refine fun (hi : m ≤ i) ↦ ⟨⟨i - m, by cutsat⟩, ?_⟩
+  · refine fun (hi : m ≤ i) ↦ ⟨⟨i - m, by lia⟩, ?_⟩
     ext
     simp [hi]
 
@@ -641,8 +655,8 @@ theorem image_addNat_Ici (m) (i : Fin n) : (addNat · m) '' Ici i = Ici (i.addNa
   rw [← preimage_addNat_Ici_addNat, image_preimage_eq_of_subset]
   intro j hj
   have : (i : ℕ) + m ≤ j := hj
-  refine ⟨⟨j - m, by cutsat⟩, ?_⟩
-  simp (disch := omega)
+  refine ⟨⟨j - m, by lia⟩, ?_⟩
+  simp (disch := lia)
 
 @[simp]
 theorem image_addNat_Ioi (m) (i : Fin n) : (addNat · m) '' Ioi i = Ioi (i.addNat m) := by

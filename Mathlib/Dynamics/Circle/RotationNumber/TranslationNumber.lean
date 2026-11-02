@@ -3,11 +3,10 @@ Copyright (c) 2020 Yury Kudryashov. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yury Kudryashov
 -/
-import Mathlib.Analysis.SpecificLimits.Basic
-import Mathlib.Order.Iterate
-import Mathlib.Order.SemiconjSup
-import Mathlib.Topology.Order.MonotoneContinuity
-import Mathlib.Algebra.CharP.Defs
+module
+
+public import Mathlib.Analysis.SpecificLimits.Basic
+public import Mathlib.Order.SemiconjSup
 
 /-!
 # Translation number of a monotone real map that commutes with `x ↦ x + 1`
@@ -70,7 +69,7 @@ We prove the following properties of `CircleDeg1Lift.translationNumber`.
   homomorphisms from `G →* CircleDeg1Lift`). If the translation numbers of `f₁ g` and `f₂ g` are
   equal to each other for all `g : G`, then these two actions are semiconjugate by some
   `F : CircleDeg1Lift`. This is a version of Proposition 5.4 from [Étienne Ghys, Groupes
-  d'homeomorphismes du cercle et cohomologie bornee][ghys87:groupes].
+  d'homéomorphismes du cercle et cohomologie bornée][ghys87:groupes].
 
 ## Notation
 
@@ -92,7 +91,7 @@ preserving circle homeomorphisms for two reasons:
 
 ## References
 
-* [Étienne Ghys, Groupes d'homeomorphismes du cercle et cohomologie bornee][ghys87:groupes]
+* [Étienne Ghys, Groupes d'homéomorphismes du cercle et cohomologie bornée][ghys87:groupes]
 
 ## TODO
 
@@ -115,8 +114,12 @@ Here are some short-term goals.
 circle homeomorphism, rotation number
 -/
 
-open Filter Set Int Topology
+@[expose] public section
+
+open Filter Set Int
 open Function hiding Commute
+
+open scoped Topology
 
 /-!
 ### Definition and monoid structure
@@ -128,9 +131,10 @@ structure CircleDeg1Lift : Type extends ℝ →o ℝ where
 
 namespace CircleDeg1Lift
 
+@[macro_inline]
 instance : FunLike CircleDeg1Lift ℝ ℝ where
   coe f := f.toFun
-  coe_injective' | ⟨⟨_, _⟩, _⟩, ⟨⟨_, _⟩, _⟩, rfl => rfl
+  coe_injective | ⟨⟨_, _⟩, _⟩, ⟨⟨_, _⟩, _⟩, rfl => rfl
 
 instance : OrderHomClass CircleDeg1Lift ℝ ℝ where
   map_rel f _ _ h := f.monotone' h
@@ -143,7 +147,7 @@ variable (f g : CircleDeg1Lift)
 
 protected theorem monotone : Monotone f := f.monotone'
 
-@[mono] theorem mono {x y} (h : x ≤ y) : f x ≤ f y := f.monotone h
+@[gcongr, mono] theorem mono {x y} (h : x ≤ y) : f x ≤ f y := f.monotone h
 
 theorem strictMono_iff_injective : StrictMono f ↔ Injective f :=
   f.monotone.strictMono_iff_injective
@@ -250,7 +254,7 @@ theorem commute_iff_commute {f g : CircleDeg1Lift} : Commute f g ↔ Function.Co
 /-- The map `y ↦ x + y` as a `CircleDeg1Lift`. More precisely, we define a homomorphism from
 `Multiplicative ℝ` to `CircleDeg1Liftˣ`, so the translation by `x` is
 `translation (Multiplicative.ofAdd x)`. -/
-def translate : Multiplicative ℝ →* CircleDeg1Liftˣ := MonoidHom.toHomUnits <|
+def translate : Multiplicative ℝ →* CircleDeg1Liftˣ := MonoidHom.toHomUnits
   { toFun x := ⟨⟨fun y => x.toAdd + y, add_right_mono⟩, fun _ => (add_assoc ..).symm⟩
     map_one' := ext zero_add
     map_mul' _ _ := ext <| add_assoc _ _ }
@@ -266,7 +270,7 @@ theorem translate_inv_apply (x y : ℝ) : (translate <| Multiplicative.ofAdd x)�
 @[simp]
 theorem translate_zpow (x : ℝ) (n : ℤ) :
     translate (Multiplicative.ofAdd x) ^ n = translate (Multiplicative.ofAdd <| ↑n * x) := by
-  simp only [← zsmul_eq_mul, ofAdd_zsmul, MonoidHom.map_zpow]
+  simp only [← zsmul_eq_mul, ofAdd_zsmul, map_zpow]
 
 @[simp]
 theorem translate_pow (x : ℝ) (n : ℕ) :
@@ -294,7 +298,7 @@ theorem commute_add_nat (n : ℕ) : Function.Commute f (· + n) := by
   simp only [add_comm _ (n : ℝ), f.commute_nat_add n]
 
 theorem commute_sub_nat (n : ℕ) : Function.Commute f (· - n) := by
-  simpa only [sub_eq_add_neg] using
+  simpa only [sub_eq_add_neg] using!
     (f.commute_add_nat n).inverses_right (Equiv.addRight _).right_inv (Equiv.addRight _).left_inv
 
 theorem commute_add_int : ∀ n : ℤ, Function.Commute f (· + n)
@@ -305,7 +309,7 @@ theorem commute_int_add (n : ℤ) : Function.Commute f (n + ·) := by
   simpa only [add_comm _ (n : ℝ)] using f.commute_add_int n
 
 theorem commute_sub_int (n : ℤ) : Function.Commute f (· - n) := by
-  simpa only [sub_eq_add_neg] using
+  simpa only [sub_eq_add_neg] using!
     (f.commute_add_int n).inverses_right (Equiv.addRight _).right_inv (Equiv.addRight _).left_inv
 
 @[simp]
@@ -563,7 +567,7 @@ theorem translationNumber_eq_of_tendsto₀ {τ' : ℝ}
     (h : Tendsto (fun n : ℕ => f^[n] 0 / n) atTop (𝓝 τ')) : τ f = τ' :=
   f.translationNumber_eq_of_tendsto_aux <| by
     simpa [Function.comp_def, transnumAuxSeq_def, coe_pow] using
-      h.comp (Nat.tendsto_pow_atTop_atTop_of_one_lt one_lt_two)
+      h.comp (tendsto_pow_atTop_atTop_of_one_lt one_lt_two)
 
 theorem translationNumber_eq_of_tendsto₀' {τ' : ℝ}
     (h : Tendsto (fun n : ℕ => f^[n + 1] 0 / (n + 1)) atTop (𝓝 τ')) : τ f = τ' :=
@@ -798,7 +802,7 @@ theorem exists_eq_add_translationNumber (hf : Continuous f) : ∃ x, f x = x + �
   obtain ⟨b, hb⟩ : ∃ x, x + τ f ≤ f x := by
     by_contra! H
     exact lt_irrefl _ (f.translationNumber_lt_of_forall_lt_add hf H)
-  exact intermediate_value_univ₂ hf (continuous_id.add continuous_const) ha hb
+  exact intermediate_value_univ₂ hf (by fun_prop) ha hb
 
 theorem translationNumber_eq_int_iff (hf : Continuous f) {m : ℤ} :
     τ f = m ↔ ∃ x : ℝ, f x = x + m := by
@@ -823,8 +827,8 @@ orientation-preserving circle homeomorphisms. Suppose that for each `g : G` the 
 `f₁ g` and `f₂ g` have equal rotation numbers. Then there exists `F : CircleDeg1Lift` such that
 `F * f₁ g = f₂ g * F` for all `g : G`.
 
-This is a version of Proposition 5.4 from [Étienne Ghys, Groupes d'homeomorphismes du cercle et
-cohomologie bornee][ghys87:groupes]. -/
+This is a version of Proposition 5.4 from [Étienne Ghys, Groupes d'homéomorphismes du cercle et
+cohomologie bornée][ghys87:groupes]. -/
 theorem semiconj_of_group_action_of_forall_translationNumber_eq {G : Type*} [Group G]
     (f₁ f₂ : G →* CircleDeg1Lift) (h : ∀ g, τ (f₁ g) = τ (f₂ g)) :
     ∃ F : CircleDeg1Lift, ∀ g, Semiconj F (f₁ g) (f₂ g) := by
@@ -834,7 +838,7 @@ theorem semiconj_of_group_action_of_forall_translationNumber_eq {G : Type*} [Gro
     refine fun x => ⟨x + 2, ?_⟩
     rintro _ ⟨g, rfl⟩
     have : τ (f₂ g⁻¹) = -τ (f₂ g) := by
-      rw [← MonoidHom.coe_toHomUnits, MonoidHom.map_inv, translationNumber_units_inv,
+      rw [← MonoidHom.coe_toHomUnits, map_inv, translationNumber_units_inv,
         MonoidHom.coe_toHomUnits]
     calc
       f₂ g⁻¹ (f₁ g x) ≤ f₂ g⁻¹ (x + τ (f₁ g) + 1) :=
@@ -853,7 +857,7 @@ theorem semiconj_of_group_action_of_forall_translationNumber_eq {G : Type*} [Gro
     csSup_div_semiconj F₂ F₁ fun x => ?_⟩ <;> simp only [hF₁, hF₂, ← map_inv]
   · exact ciSup_mono (this y) fun g => mono _ (mono _ hxy)
   · simp only [map_add_one]
-    exact (Monotone.map_ciSup_of_continuousAt (continuousAt_id.add continuousAt_const)
+    exact (Monotone.map_ciSup_of_continuousAt (by fun_prop)
       (monotone_id.add_const (1 : ℝ)) (this x)).symm
   · exact this x
 

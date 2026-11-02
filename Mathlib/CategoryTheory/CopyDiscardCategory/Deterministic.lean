@@ -3,7 +3,9 @@ Copyright (c) 2025 Jacob Reinhold. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jacob Reinhold
 -/
-import Mathlib.CategoryTheory.CopyDiscardCategory.Basic
+module
+
+public import Mathlib.CategoryTheory.CopyDiscardCategory.Basic
 
 /-!
 # Deterministic Morphisms in Copy-Discard Categories
@@ -30,6 +32,8 @@ morphisms are deterministic.
 deterministic, copy-discard category, comonoid morphism
 -/
 
+public section
+
 universe v u
 
 namespace CategoryTheory
@@ -45,7 +49,7 @@ abbrev Deterministic {X Y : C} (f : X ⟶ Y) := IsComonHom f
 
 namespace Deterministic
 
-variable {X Y Z : C}
+variable {X Y : C}
 
 /-- Deterministic morphisms commute with copying. -/
 lemma copy_natural (f : X ⟶ Y) [Deterministic f] : f ≫ Δ[Y] = Δ[X] ≫ (f ⊗ₘ f) :=

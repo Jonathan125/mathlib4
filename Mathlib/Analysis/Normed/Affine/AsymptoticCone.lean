@@ -3,8 +3,13 @@ Copyright (c) 2025 Attila Gáspár. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Attila Gáspár
 -/
-import Mathlib.Analysis.Normed.Module.FiniteDimension
-import Mathlib.Topology.Algebra.AsymptoticCone
+module
+
+public import Mathlib.Analysis.Normed.Module.FiniteDimension
+public import Mathlib.Topology.Algebra.AsymptoticCone
+
+set_option doc.verso true
+set_option doc.verso.suggestions false
 
 /-!
 # Asymptotic cones in normed spaces
@@ -13,7 +18,11 @@ In this file, we prove that the asymptotic cone of a set is non-trivial if and o
 unbounded.
 -/
 
-open AffineSpace Bornology Filter Topology
+public section
+
+open AffineSpace Bornology Filter
+
+open scoped Topology
 
 variable
   {V P : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] [MetricSpace P] [NormedAddTorsor V P]
@@ -33,7 +42,7 @@ theorem AffineSpace.asymptoticNhds_le_cobounded {v : V} (hv : v ≠ 0) :
 theorem asymptoticCone_subset_singleton_of_bounded {s : Set P} (hs : IsBounded s) :
     asymptoticCone ℝ s ⊆ {0} := by
   intro v h
-  by_contra! hv
+  by_contra hv
   exact h (asymptoticNhds_le_cobounded hv hs)
 
 variable [FiniteDimensional ℝ V]

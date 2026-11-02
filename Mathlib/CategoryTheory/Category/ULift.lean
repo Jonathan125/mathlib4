@@ -3,9 +3,10 @@ Copyright (c) 2021 Adam Topaz. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Adam Topaz
 -/
-import Mathlib.CategoryTheory.Category.Basic
-import Mathlib.CategoryTheory.Equivalence
-import Mathlib.CategoryTheory.EqToHom
+module
+
+public import Mathlib.CategoryTheory.EqToHom
+
 import Mathlib.Data.ULift
 
 /-!
@@ -19,16 +20,16 @@ instance on `ULift C` where `C` is a type with a category instance.
 3. `CategoryTheory.ULift.equivalence` is the categorical equivalence between
   `C` and `ULift C`.
 
-# ULiftHom
+## ULiftHom
 
 Given a type `C : Type u`, `ULiftHom.{w} C` is just an alias for `C`.
-If we have `category.{v} C`, then `ULiftHom.{w} C` is endowed with a category instance
+If we have `Category.{v} C`, then `ULiftHom.{w} C` is endowed with a category instance
 whose morphisms are obtained by applying `ULift.{w}` to the morphisms from `C`.
 
 This is a category equivalent to `C`. The forward direction of the equivalence is `ULiftHom.up`,
 the backward direction is `ULiftHom.down` and the equivalence is `ULiftHom.equiv`.
 
-# AsSmall
+## AsSmall
 
 This file also contains a construction which takes a type `C : Type u` with a
 category instance `Category.{v} C` and makes a small category
@@ -37,6 +38,8 @@ category instance `Category.{v} C` and makes a small category
 The forward direction of the equivalence, `C ⥤ AsSmall C`, is denoted `AsSmall.up`
 and the backward direction is `AsSmall.down`. The equivalence itself is `AsSmall.equiv`.
 -/
+
+@[expose] public section
 
 universe w₁ v₁ v₂ u₁ u₂
 
@@ -58,6 +61,7 @@ def ULift.downFunctor : ULift.{u₂} C ⥤ C where
   obj := ULift.down
   map f := f
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The categorical equivalence between `C` and `ULift C`. -/
 @[simps]
 def ULift.equivalence : C ≌ ULift.{u₂} C where
@@ -120,6 +124,8 @@ def ULiftHom.down : ULiftHom C ⥤ C where
   obj := ULiftHom.objDown
   map f := f.down
 
+set_option backward.isDefEq.respectTransparency.types false in
+set_option backward.defeqAttrib.useBackward true in
 /-- The equivalence between `C` and `ULiftHom C`. -/
 def ULiftHom.equiv : C ≌ ULiftHom C where
   functor := ULiftHom.up
@@ -169,13 +175,14 @@ theorem eqToHom_down {X Y : AsSmall C} (h : X = Y) :
   subst h
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The equivalence between `C` and `AsSmall C`. -/
 @[simps]
 def AsSmall.equiv : C ≌ AsSmall C where
   functor := AsSmall.up
   inverse := AsSmall.down
   unitIso := NatIso.ofComponents fun _ => eqToIso rfl
-  counitIso := NatIso.ofComponents fun _ => eqToIso <| ULift.ext _ _ rfl
+  counitIso := NatIso.ofComponents fun _ => eqToIso <| ULift.ext rfl
 
 instance [Inhabited C] : Inhabited (AsSmall C) :=
   ⟨⟨default⟩⟩

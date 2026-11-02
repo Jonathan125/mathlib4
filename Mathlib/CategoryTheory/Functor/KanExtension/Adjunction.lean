@@ -3,9 +3,11 @@ Copyright (c) 2024 Joël Riou. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Joël Riou
 -/
-import Mathlib.CategoryTheory.Functor.KanExtension.Pointwise
-import Mathlib.CategoryTheory.Limits.Shapes.Grothendieck
-import Mathlib.CategoryTheory.Comma.StructuredArrow.Functor
+module
+
+public import Mathlib.CategoryTheory.Comma.StructuredArrow.Functor
+public import Mathlib.CategoryTheory.Functor.KanExtension.Pointwise
+public import Mathlib.CategoryTheory.Limits.Shapes.Grothendieck
 
 /-! # The Kan extension functor
 
@@ -22,13 +24,15 @@ right Kan extension along `L`.
 
 -/
 
+@[expose] public section
+
 namespace CategoryTheory
 
 open Category Limits
 
 namespace Functor
 
-variable {C D : Type*} [Category C] [Category D] (L : C ⥤ D) {H : Type*} [Category H]
+variable {C D : Type*} [Category* C] [Category* D] (L : C ⥤ D) {H : Type*} [Category* H]
 
 section lan
 
@@ -74,7 +78,7 @@ noncomputable def leftKanExtensionObjIsoColimit [HasLeftKanExtension L F] (X : D
     (isPointwiseLeftKanExtensionLeftKanExtensionUnit L F X)
 
 @[reassoc (attr := simp)]
-lemma ι_leftKanExtensionObjIsoColimit_inv [HasLeftKanExtension L F] (X : D)
+lemma ι_leftKanExtensionObjIsoColimit_inv (X : D)
     (f : CostructuredArrow L X) :
     colimit.ι _ f ≫ (L.leftKanExtensionObjIsoColimit F X).inv =
     (L.leftKanExtensionUnit F).app f.left ≫ (L.leftKanExtension F).map f.hom := by
@@ -103,14 +107,15 @@ lemma leftKanExtensionUnit_leftKanExtensionObjIsoColimit_hom (X : C) :
   simpa using leftKanExtensionUnit_leftKanExtension_map_leftKanExtensionObjIsoColimit_hom L F
     (L.obj X) (CostructuredArrow.mk (𝟙 _))
 
+set_option backward.isDefEq.respectTransparency false in
 @[instance]
 theorem hasColimit_map_comp_ι_comp_grothendieckProj {X Y : D} (f : X ⟶ Y) :
-    HasColimit ((functor L).map f ⋙ Grothendieck.ι (functor L) Y ⋙ grothendieckProj L ⋙ F) :=
+    HasColimit (((functor L).map f).toFunctor ⋙ Grothendieck.ι (functor L) Y ⋙
+      grothendieckProj L ⋙ F) :=
   hasColimit_of_iso (isoWhiskerRight (mapCompιCompGrothendieckProj L f) F)
 
-@[deprecated (since := "2025-07-27")]
-alias hasColimit_map_comp_ι_comp_grotendieckProj := hasColimit_map_comp_ι_comp_grothendieckProj
-
+set_option backward.defeqAttrib.useBackward true in
+set_option backward.isDefEq.respectTransparency false in
 /-- The left Kan extension of `F : C ⥤ H` along a functor `L : C ⥤ D` is isomorphic to the
 fiberwise colimit of the projection functor on the Grothendieck construction of the costructured
 arrow category composed with `F`. -/
@@ -119,7 +124,7 @@ noncomputable def leftKanExtensionIsoFiberwiseColimit [HasLeftKanExtension L F] 
     leftKanExtension L F ≅ fiberwiseColimit (grothendieckProj L ⋙ F) :=
   letI : ∀ X, HasColimit (Grothendieck.ι (functor L) X ⋙ grothendieckProj L ⋙ F) :=
       fun X => hasColimit_of_iso <| Iso.symm <|
-        isoWhiskerRight (eqToIso ((functor L).map_id X)) _ ≪≫
+        isoWhiskerRight (eqToIso congr($((functor L).map_id X).toFunctor)) _ ≪≫
         Functor.leftUnitor (Grothendieck.ι (functor L) X ⋙ grothendieckProj L ⋙ F)
   Iso.symm <| NatIso.ofComponents
     (fun X => HasColimit.isoOfNatIso (isoWhiskerRight (ιCompGrothendieckProj L X) F) ≪≫
@@ -144,10 +149,12 @@ noncomputable def lanAdjunction : L.lan ⊣ (whiskeringLeft C D H).obj L :=
           rw [descOfIsLeftKanExtension_fac_app, NatTrans.comp_app, ← assoc]
           have h := congr_app (L.lanUnit.naturality f) X
           dsimp at h ⊢
-          rw [← h, assoc, descOfIsLeftKanExtension_fac_app] )
+          rw [← h, assoc, descOfIsLeftKanExtension_fac_app])
       homEquiv_naturality_right := fun {F G₁ G₂} β f => by
         dsimp [homEquivOfIsLeftKanExtension]
         rw [assoc] }
+
+instance : (L.lan (H := H)).IsLeftAdjoint := (L.lanAdjunction H).isLeftAdjoint
 
 variable (H) in
 @[simp]
@@ -220,6 +227,8 @@ noncomputable def colimitIsoColimitGrothendieck :
   _ ≅ colimit (CostructuredArrow.grothendieckProj L ⋙ G) :=
         colimitFiberwiseColimitIso _
 
+set_option backward.defeqAttrib.useBackward true in
+set_option backward.isDefEq.respectTransparency false in
 @[reassoc (attr := simp)]
 lemma ι_colimitIsoColimitGrothendieck_inv (X : Grothendieck (CostructuredArrow.functor L)) :
     colimit.ι (CostructuredArrow.grothendieckProj L ⋙ G) X ≫
@@ -227,6 +236,7 @@ lemma ι_colimitIsoColimitGrothendieck_inv (X : Grothendieck (CostructuredArrow.
     colimit.ι G ((CostructuredArrow.proj L X.base).obj X.fiber) := by
   simp [colimitIsoColimitGrothendieck]
 
+set_option backward.isDefEq.respectTransparency.types false in
 @[reassoc (attr := simp)]
 lemma ι_colimitIsoColimitGrothendieck_hom (X : C) :
     colimit.ι G X ≫ (colimitIsoColimitGrothendieck L G).hom =
@@ -304,6 +314,7 @@ noncomputable def ranObjObjIsoLimit (F : C ⥤ H) [HasPointwiseRightKanExtension
   RightExtension.IsPointwiseRightKanExtensionAt.isoLimit (F := F)
     (isPointwiseRightKanExtensionRanCounit L F X)
 
+set_option backward.isDefEq.respectTransparency false in
 @[reassoc (attr := simp)]
 lemma ranObjObjIsoLimit_hom_π
     (F : C ⥤ H) [HasPointwiseRightKanExtension L F] (X : D) (f : StructuredArrow X L) :
@@ -337,6 +348,8 @@ noncomputable def ranAdjunction : (whiskeringLeft C D H).obj L ⊣ L.ran :=
       homEquiv_naturality_left_symm := fun {F₁ F₂ G} β f ↦ by
         dsimp [homEquivOfIsRightKanExtension]
         rw [assoc] }
+
+instance : (L.ran (H := H)).IsRightAdjoint := (L.ranAdjunction H).isRightAdjoint
 
 variable (H) in
 @[simp]

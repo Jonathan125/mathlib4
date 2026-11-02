@@ -3,12 +3,19 @@ Copyright (c) 2025 Dexin Zhang. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Dexin Zhang
 -/
-import Mathlib.Algebra.GroupWithZero.InjSurj
-import Mathlib.Algebra.Group.Submonoid.Defs
+module
+
+public import Mathlib.Algebra.Group.Submonoid.Defs
+public import Mathlib.Algebra.GroupWithZero.InjSurj
+
+set_option doc.verso true
+set_option doc.verso.suggestions false
 
 /-!
 # Submagmas with zero inherit cancellations
 -/
+
+public section
 
 namespace MulZeroMemClass
 

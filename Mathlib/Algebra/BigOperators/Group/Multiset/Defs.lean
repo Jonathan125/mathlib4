@@ -3,10 +3,12 @@ Copyright (c) 2015 Microsoft Corporation. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Mario Carneiro
 -/
-import Mathlib.Algebra.BigOperators.Group.List.Defs
-import Mathlib.Algebra.Group.Basic
-import Mathlib.Data.Multiset.Basic
-import Mathlib.Data.Multiset.Filter
+module
+
+public import Mathlib.Algebra.BigOperators.Group.List.Defs
+public import Mathlib.Algebra.Group.Basic
+public import Mathlib.Data.Multiset.Basic
+public import Mathlib.Data.Multiset.Filter
 
 /-!
 # Sums and products over multisets
@@ -21,15 +23,17 @@ and sums indexed by finite sets.
 * `Multiset.sum`: `s.sum f` is the sum of `f i` over all `i ∈ s`.
 -/
 
+@[expose] public section
+
 assert_not_exists MonoidWithZero
 
-variable {F ι M N : Type*}
+variable {ι M N : Type*}
 
 namespace Multiset
 
 section CommMonoid
 
-variable [CommMonoid M] [CommMonoid N] {s t : Multiset M} {a : M} {m : Multiset ι} {f g : ι → M}
+variable [CommMonoid M] [CommMonoid N] {s : Multiset M} {a : M} {m : Multiset ι} {f g : ι → M}
 
 /-- Product of a multiset given a commutative monoid structure on `M`.
   `prod {a, b, c} = a * b * c` -/

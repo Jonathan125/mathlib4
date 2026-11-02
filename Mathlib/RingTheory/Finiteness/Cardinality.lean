@@ -3,12 +3,13 @@ Copyright (c) 2020 Johan Commelin. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Johan Commelin
 -/
-import Mathlib.Algebra.Module.Congruence.Defs
-import Mathlib.LinearAlgebra.Basis.Cardinality
-import Mathlib.LinearAlgebra.DFinsupp
-import Mathlib.LinearAlgebra.Isomorphisms
-import Mathlib.LinearAlgebra.StdBasis
-import Mathlib.RingTheory.Finiteness.Basic
+module
+
+public import Mathlib.Algebra.Module.Congruence.Defs
+public import Mathlib.LinearAlgebra.Basis.Cardinality
+public import Mathlib.LinearAlgebra.Isomorphisms
+public import Mathlib.LinearAlgebra.StdBasis
+public import Mathlib.RingTheory.Finiteness.Basic
 
 /-!
 # Finite modules and types with finitely many elements
@@ -17,8 +18,9 @@ This file relates `Module.Finite` and `_root_.Finite`.
 
 -/
 
+@[expose] public section
+
 open Function (Surjective)
-open Finsupp
 
 section ModuleAndAlgebra
 

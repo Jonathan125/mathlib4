@@ -3,7 +3,9 @@ Copyright (c) 2014 Mario Carneiro. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Mario Carneiro, Yaël Dillies, Patrick Stevens
 -/
-import Mathlib.Algebra.Order.Field.Basic
+module
+
+public import Mathlib.Algebra.Order.Field.Basic
 
 /-!
 # Cast of naturals into ordered fields
@@ -14,6 +16,8 @@ This file concerns the canonical homomorphism `ℕ → F`, where `F` is a `Linea
 
 * `Nat.cast_div_le`: in all cases, `↑(m / n) ≤ ↑m / ↑ n`
 -/
+
+public section
 
 
 namespace Nat
@@ -65,11 +69,11 @@ section LinearOrderedField
 
 variable {α : Type*} [Field α] [LinearOrder α] [IsStrictOrderedRing α]
 
-theorem one_sub_one_div_cast_nonneg [AddRightMono α] (n : ℕ) : 0 ≤ 1 - 1 / (n : α) := by
+theorem one_sub_one_div_cast_nonneg (n : ℕ) : 0 ≤ 1 - 1 / (n : α) := by
   rw [sub_nonneg, one_div]
   exact cast_inv_le_one n
 
-theorem one_sub_one_div_cast_le_one [AddLeftMono α] (n : ℕ) : 1 - 1 / (n : α) ≤ 1 := by
+theorem one_sub_one_div_cast_le_one (n : ℕ) : 1 - 1 / (n : α) ≤ 1 := by
   rw [sub_le_self_iff]
   exact one_div_cast_nonneg n
 

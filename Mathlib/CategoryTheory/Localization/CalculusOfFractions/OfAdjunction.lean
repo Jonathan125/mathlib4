@@ -3,9 +3,12 @@ Copyright (c) 2025 Joël Riou. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Joël Riou
 -/
-import Mathlib.CategoryTheory.Adjunction.Opposites
+module
+
+public import Mathlib.CategoryTheory.Localization.CalculusOfFractions
+
 import Mathlib.CategoryTheory.Adjunction.FullyFaithful
-import Mathlib.CategoryTheory.Localization.CalculusOfFractions
+import Mathlib.CategoryTheory.Adjunction.Opposites
 
 /-!
 # The calculus of fractions deduced from an adjunction
@@ -23,13 +26,15 @@ the class of isomorphisms by `G`.
 
 -/
 
+public section
+
 namespace CategoryTheory
 
 open MorphismProperty
 
 namespace Adjunction
 
-variable {C₁ C₂ : Type*} [Category C₁] [Category C₂]
+variable {C₁ C₂ : Type*} [Category* C₁] [Category* C₂]
   {G : C₁ ⥤ C₂} {F : C₂ ⥤ C₁}
 
 lemma hasLeftCalculusOfFractions (adj : G ⊣ F) (W : MorphismProperty C₁)
@@ -89,13 +94,13 @@ lemma isLocalization_rightAdjoint
 lemma functorCategory_inverseImage_isomorphisms_unit (adj : G ⊣ F) :
     ((isomorphisms C₂).inverseImage G).functorCategory C₁ adj.unit := by
   intro
-  simp only [Functor.id_obj, Functor.comp_obj, inverseImage_iff, isomorphisms.iff]
+  simp only [Functor.id_obj, inverseImage_iff, isomorphisms.iff]
   infer_instance
 
 lemma functorCategory_inverseImage_isomorphisms_counit (adj : F ⊣ G) :
     ((isomorphisms C₂).inverseImage G).functorCategory C₁ adj.counit := by
   intro
-  simp only [Functor.id_obj, Functor.comp_obj, inverseImage_iff, isomorphisms.iff]
+  simp only [Functor.id_obj, inverseImage_iff, isomorphisms.iff]
   infer_instance
 
 lemma isLocalization_leftAdjoint' (adj : G ⊣ F) :

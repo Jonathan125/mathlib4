@@ -3,7 +3,12 @@ Copyright (c) 2014 Jeremy Avigad. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jeremy Avigad, Andrew Zipperer, Haitao Zhang, Minchao Wu, Yury Kudryashov
 -/
-import Mathlib.Data.Set.Function
+module
+
+public import Mathlib.Data.Set.Function
+
+set_option doc.verso true
+set_option doc.verso.suggestions false
 
 /-!
 # Piecewise functions
@@ -11,9 +16,11 @@ import Mathlib.Data.Set.Function
 This file contains basic results on piecewise defined functions.
 -/
 
-variable {α β γ δ : Type*} {ι : Sort*} {π : α → Type*}
+public section
 
-open Equiv Equiv.Perm Function
+variable {α β γ δ : Type*} {ι : Sort*}
+
+open Equiv.Perm Function
 
 namespace Set
 
@@ -46,13 +53,11 @@ theorem piecewise_insert [DecidableEq α] (j : α) [∀ i, Decidable (i ∈ inse
 
 @[simp]
 theorem piecewise_eq_of_mem {i : α} (hi : i ∈ s) : s.piecewise f g i = f i :=
-  if_pos hi
+  ite_eq_left hi
 
 @[simp]
 theorem piecewise_eq_of_notMem {i : α} (hi : i ∉ s) : s.piecewise f g i = g i :=
-  if_neg hi
-
-@[deprecated (since := "2025-05-23")] alias piecewise_eq_of_not_mem := piecewise_eq_of_notMem
+  ite_eq_right hi
 
 theorem piecewise_singleton (x : α) [∀ y, Decidable (y ∈ ({x} : Set α))] [DecidableEq α]
     (f g : α → β) : piecewise {x} f g = Function.update g x (f x) := by
@@ -174,7 +179,7 @@ theorem pi_piecewise {ι : Type*} {α : ι → Type*} (s s' : Set ι) (t t' : �
 
 theorem univ_pi_piecewise {ι : Type*} {α : ι → Type*} (s : Set ι) (t t' : ∀ i, Set (α i))
     [∀ x, Decidable (x ∈ s)] : pi univ (s.piecewise t t') = pi s t ∩ pi sᶜ t' := by
-  simp [compl_eq_univ_diff]
+  simp [compl_eq_univ_sdiff]
 
 theorem univ_pi_piecewise_univ {ι : Type*} {α : ι → Type*} (s : Set ι) (t : ∀ i, Set (α i))
     [∀ x, Decidable (x ∈ s)] : pi univ (s.piecewise t fun _ => univ) = pi s t := by simp

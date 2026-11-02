@@ -3,8 +3,10 @@ Copyright (c) 2025 Joseph Myers. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Joseph Myers
 -/
-import Mathlib.Geometry.Euclidean.Angle.Oriented.Affine
-import Mathlib.Geometry.Euclidean.Angle.Unoriented.Projection
+module
+
+public import Mathlib.Geometry.Euclidean.Angle.Oriented.Affine
+public import Mathlib.Geometry.Euclidean.Angle.Unoriented.Projection
 
 /-!
 # Oriented angles and orthogonal projection.
@@ -12,6 +14,8 @@ import Mathlib.Geometry.Euclidean.Angle.Unoriented.Projection
 This file proves lemmas relating to oriented angles involving orthogonal projections.
 
 -/
+
+public section
 
 
 namespace EuclideanGeometry
@@ -28,7 +32,7 @@ lemma oangle_self_orthogonalProjection (p : P) {p' : P} {s : AffineSubspace ℝ 
     haveI : Nonempty s := ⟨p', h⟩
     ∡ p (orthogonalProjection s p) p' = (π / 2 : ℝ) ∨
       ∡ p (orthogonalProjection s p) p' = (-π / 2 : ℝ) := by
-  haveI : Nonempty s := ⟨p', h⟩
+  have : Nonempty s := ⟨p', h⟩
   have hpne : p ≠ orthogonalProjection s p := Ne.symm (orthogonalProjection_eq_self_iff.not.2 hp)
   have ha := oangle_eq_angle_or_eq_neg_angle hpne hp'
   rw [angle_self_orthogonalProjection p h] at ha
