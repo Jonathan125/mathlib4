@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Jonathan Konig. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Alex Meiburg
+Authors: Jonathan Konig
 -/
 import Mathlib.Data.Nat.Basic
 import Mathlib.CategoryTheory.Category.Basic
