@@ -173,10 +173,6 @@ protected def initial_coproduct_square (m n : FintypeCat.Skeleton.{u}) :
   fac := FintypeCat.Skeleton.zero_to_uniq _ _
 
 
-/-
-Classical.choice culprit:
-  Nat.sub_lt_iff_lt_add' {a b c : ℕ} (hba : b ≤ a) : a - b < c ↔ a < b + c
--/
 
 
 /-- Depends on Classical.choice -/
