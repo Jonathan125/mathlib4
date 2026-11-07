@@ -51,6 +51,8 @@ class BijectionOnObjects {C : Type u₁} [Category.{v₁} C] {D : Type u₂} [Ca
 
 namespace BijectionOnObjects
 
+section
+
 variable {C : Type u₁} [Category.{v₁} C] {D : Type u₂} [Category.{v₂} D] (F : C ⥤ D)
   [BijectionOnObjects F]
 
@@ -67,6 +69,17 @@ protected theorem obj_conj (X : C) (Y : D) : F.obj X = Y ↔ X = objInv F Y :=
 
 protected theorem obj_inv_conj (Y : D) (X : C) : objInv F Y = X ↔ Y = F.obj X :=
   ⟨fun h ↦ by simp [← h], fun h ↦ by simp [h]⟩
+
+end
+
+protected instance subsingleton {C : Type u₁} [Category.{v₁} C] {D : Type u₂} [Category.{v₂} D]
+    (F : C ⥤ D) : Subsingleton F.BijectionOnObjects where
+  allEq A B := by
+    have h := A.obj_inv_conj
+    match A, B with
+    | BijectionOnObjects.mk objInv _ _, BijectionOnObjects.mk objInv' _ right_inv' =>
+      obtain rfl : objInv = objInv' := funext <| fun X => (h X _ ).mpr (right_inv' X).symm
+      rfl
 
 end BijectionOnObjects
 
