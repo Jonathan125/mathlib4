@@ -42,8 +42,9 @@ namespace AlgebraicTheories
 
 universe v₂ u₁ u₂
 
-class LawvereStruct {T : Type u₂} [Category.{v₂} T] (F : FintypeCat.Skeleton.{u₁} ⥤ T)
-    extends F.BijectionOnObjects where
+
+class LawvereStruct {T : Type u₂} [Category.{v₂} T] (F : FintypeCat.Skeleton.{u₁} ⥤ T) :
+    Type (max u₁ u₂ v₂) extends F.BijectionOnObjects where
   initial_to (n : FintypeCat.Skeleton.{u₁}) : F.obj (FintypeCat.Skeleton.mk 0) ⟶ F.obj n
 
   coproduct_desc {m n k : FintypeCat.Skeleton.{u₁}} (f : F.obj m ⟶ F.obj k)
@@ -83,11 +84,48 @@ protected instance subsingleton {T : Type u₂} [Category.{v₂} T]
 
 end LawvereStruct
 
-structure LawvereTheory where
+structure LawvereTheory : Type (max u₁ (u₂ + 1) (v₂ + 1)) where
   {T : Type u₂}
-  [Cat : Category.{v₂} T]
+  [cat : Category.{v₂} T]
   (F : FintypeCat.Skeleton.{u₁} ⥤ T)
-  [Struct : LawvereStruct F]
+  [struct : LawvereStruct F]
+
+attribute [instance] LawvereTheory.cat LawvereTheory.struct
+
+namespace LawvereTheory
+
+/--
+In Mathlib, Functor composition depends on the Classical.choice axiom.
+We are unable to define a morphism of Lawvere theories without introducing the axiom of choice.
+-/
+protected structure Hom (A B : LawvereTheory.{v₂, u₁, u₂}) where
+  G : A.T ⥤ B.T
+  comm : A.F ⋙ G = B.F := by cat_disch
+
+attribute [simp] LawvereTheory.Hom.comm
+
+namespace Hom
+
+@[simp]
+protected theorem comm_assoc {A B : LawvereTheory.{v₂, u₁, u₂}} (f : LawvereTheory.Hom A B)
+    {T : Type u₂} [Category.{v₂} T] (H : B.T ⥤ T) : A.F ⋙ f.G ⋙ H = B.F ⋙ H :=
+  by simp [-LawvereTheory.Hom.comm, <-f.comm] ; rfl
+
+protected def id (A : LawvereTheory.{v₂, u₁, u₂}) : LawvereTheory.Hom A A where
+  G := 𝟭 A.T
+
+protected def comp {A B C : LawvereTheory.{v₂, u₁, u₂}} (f : LawvereTheory.Hom A B)
+    (g : LawvereTheory.Hom B C) : LawvereTheory.Hom A C where
+  G := f.G ⋙ g.G
+
+end Hom
+
+protected instance Cat : Category.{max u₂ v₂} LawvereTheory.{v₂, u₁, u₂} where
+  Hom := LawvereTheory.Hom
+  id := LawvereTheory.Hom.id
+  comp := LawvereTheory.Hom.comp
+
+end LawvereTheory
 
 end AlgebraicTheories
 
