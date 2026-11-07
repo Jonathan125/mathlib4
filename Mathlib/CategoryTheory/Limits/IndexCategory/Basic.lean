@@ -6,6 +6,8 @@ Authors: Jonathan Konig
 import Mathlib.CategoryTheory.FintypeCat
 import Mathlib.CategoryTheory.Limits.Shapes.Terminal
 import Mathlib.CategoryTheory.Limits.Shapes.BinaryProducts.BinaryProducts
+import Mathlib.CategoryTheory.Limits.Shapes.Pullback.Square
+
 
 /-!
 # Basic
@@ -64,13 +66,6 @@ protected theorem zero_to_uniq {n : FintypeCat.Skeleton.{u}} (f g : FintypeCat.S
     f = g :=
   funext <| fun ⟨i⟩ ↦ i.elim0
 
-protected def zero_is_initial : Limits.IsInitial (FintypeCat.Skeleton.mk.{u} 0) where
-  desc s := FintypeCat.Skeleton.zero_to s.pt
-  uniq _ _ _ := FintypeCat.Skeleton.zero_to_uniq _ _
-
-protected instance has_initial : Limits.HasInitial FintypeCat.Skeleton :=
-  FintypeCat.Skeleton.zero_is_initial.hasInitial
-
 
 
 
@@ -103,7 +98,7 @@ def cast_initial_segment_to_left {m n : FintypeCat.Skeleton.{u}} (i : ULift (Fin
 
 lemma cast_concluding_segment_to_right_lt {m n : FintypeCat.Skeleton.{u}}
     (i : ULift (Fin (m + n).len)) (h : ¬ i.down.val < m.len) : i.down.val - m.len < n.len :=
-  (Nat.sub_lt_iff_lt_add' (Nat.le_of_not_lt h)).mpr i.down.isLt
+  Nat.sub_lt_left_of_lt_add (Nat.le_of_not_lt h) i.down.isLt
 
 def cast_concluding_segment_to_right {m n : FintypeCat.Skeleton.{u}}
     (i : ULift (Fin (m + n).len)) (h : ¬ i.down.val < m.len) : ULift (Fin n.len) :=
@@ -122,7 +117,6 @@ theorem cast_concluding_segment_to_right_app_val {m n : FintypeCat.Skeleton.{u}}
     (cast_concluding_segment_to_right i h).down.val = i.down.val - m.len :=
   rfl
 
-
 @[simp]
 theorem to_initial_segment_cast_initial_segment_to_left {m n : FintypeCat.Skeleton.{u}}
     (i : ULift (Fin (m + n).len)) (h : i.down.val < m.len) :
@@ -134,7 +128,6 @@ theorem to_concluding_segment_cast_concluding_segment_to_right {m n : FintypeCat
     (i : ULift (Fin (m + n).len)) (h : ¬ i.down.val < m.len) :
     to_concluding_segment m n (cast_concluding_segment_to_right i h) = i :=
   by ext ; simp [Nat.add_sub_cancel' (Nat.le_of_not_lt h)]
-
 
 def coproduct_hom {m n k : FintypeCat.Skeleton.{u}} (f : m ⟶ k) (g : n ⟶ k) : m + n ⟶ k :=
   fun i ↦ if h : i.down.val < m.len
@@ -169,21 +162,57 @@ theorem coproduct_hom_ext {m n k : FintypeCat.Skeleton.{u}} (f g : m + n ⟶ k) 
     (coproduct_hom_unique _ _ _ rfl rfl).symm
 
 
-protected def binary_cofan (m n : FintypeCat.Skeleton.{u}) : Limits.BinaryCofan m n :=
+
+
+protected def initial_coproduct_square (m n : FintypeCat.Skeleton.{u}) :
+    Square FintypeCat.Skeleton.{u} where
+  f₁₂ := FintypeCat.Skeleton.zero_to m
+  f₁₃ := FintypeCat.Skeleton.zero_to n
+  f₂₄ := FintypeCat.Skeleton.to_initial_segment m n
+  f₃₄ := FintypeCat.Skeleton.to_concluding_segment m n
+  fac := FintypeCat.Skeleton.zero_to_uniq _ _
+
+
+/-
+Classical.choice culprit:
+  Nat.sub_lt_iff_lt_add' {a b c : ℕ} (hba : b ≤ a) : a - b < c ↔ a < b + c
+-/
+
+
+/-- Depends on Classical.choice -/
+protected def initial : Limits.IsInitial (FintypeCat.Skeleton.mk.{u} 0) where
+  desc s := FintypeCat.Skeleton.zero_to s.pt
+  uniq _ _ _ := FintypeCat.Skeleton.zero_to_uniq _ _
+
+/-- Depends on Classical.choice -/
+protected instance has_initial : Limits.HasInitial FintypeCat.Skeleton :=
+  FintypeCat.Skeleton.initial.hasInitial
+
+/-- Depends on Classical.choice -/
+protected def binary_cofan {m n : FintypeCat.Skeleton.{u}} : Limits.BinaryCofan m n :=
   Limits.BinaryCofan.mk (to_initial_segment m n) (to_concluding_segment m n)
 
-protected def binary_coproduct {m n : FintypeCat.Skeleton.{u}} :
-    Limits.IsColimit (FintypeCat.Skeleton.binary_cofan m n) :=
+/-- Depends on Classical.choice -/
+protected def binary_coprod {m n : FintypeCat.Skeleton.{u}} :
+    Limits.IsColimit (@FintypeCat.Skeleton.binary_cofan m n) :=
   Limits.BinaryCofan.isColimitMk (fun s ↦ s.inl [,] s.inr)
     (fun _ ↦ to_initial_segment_comp_coproduct_hom _ _)
     (fun _ ↦ to_concluding_segment_comp_coproduct_hom _ _) (fun _ _ ↦ coproduct_hom_unique _ _ _)
 
+/-- Depends on Classical.choice -/
 protected instance hasColimitPair {m n : FintypeCat.Skeleton.{u}} :
     Limits.HasColimit (Limits.pair m n) :=
-  Limits.HasColimit.mk ⟨_, FintypeCat.Skeleton.binary_coproduct⟩
+  Limits.HasColimit.mk ⟨_, FintypeCat.Skeleton.binary_coprod⟩
 
+/-- Depends on Classical.choice -/
 protected instance hasBinaryCoproducts : Limits.HasBinaryCoproducts FintypeCat.Skeleton.{u} :=
   Limits.hasBinaryCoproducts_of_hasColimit_pair FintypeCat.Skeleton
+
+/-- Depends on Classical.choice -/
+protected theorem initial_coproduct_square_is_pushout {m n : FintypeCat.Skeleton.{u}} :
+    (FintypeCat.Skeleton.initial_coproduct_square m n).IsPushout :=
+  IsPushout.of_is_coproduct FintypeCat.Skeleton.binary_coprod FintypeCat.Skeleton.initial
+
 
 end FintypeCat.Skeleton
 
