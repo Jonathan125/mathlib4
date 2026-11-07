@@ -46,8 +46,8 @@ universe v₁ v₂ u₁ u₂
 class BijectionOnObjects {C : Type u₁} [Category.{v₁} C] {D : Type u₂} [Category.{v₂} D] (F : C ⥤ D)
     where
   objInv : D → C
-  left_inv : Function.LeftInverse objInv F.obj
-  right_inv : Function.RightInverse objInv F.obj
+  left_inv : Function.LeftInverse objInv F.obj := by cat_disch
+  right_inv : Function.RightInverse objInv F.obj := by cat_disch
 
 namespace BijectionOnObjects
 
