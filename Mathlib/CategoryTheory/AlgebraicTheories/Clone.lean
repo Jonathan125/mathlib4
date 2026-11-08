@@ -41,7 +41,7 @@ namespace AlgebraicTheories
 
 universe u
 
-structure AbstractClone where
+structure AbstractClone : Type (u + 1) where
   c : ℕ → Type u
   υ {n : ℕ} : Fin n → c n
   μ {m n : ℕ} : c m → (Fin m → c n) → c n
@@ -55,7 +55,7 @@ attribute [simp] AbstractClone.projection AbstractClone.identity AbstractClone.a
 
 namespace AbstractClone
 
-protected structure Hom (A B : AbstractClone) where
+protected structure Hom (A B : AbstractClone.{u}) : Type u where
   hom {n : ℕ} : A.c n → B.c n
   υ_comm {n : ℕ} (i : Fin n) : hom (A.υ i) = B.υ i
   μ_comm {m n : ℕ} (x : A.c m) (ys : Fin m → A.c n) :
@@ -66,14 +66,14 @@ attribute [simp] AbstractClone.Hom.υ_comm AbstractClone.Hom.μ_comm
 namespace Hom
 
 @[simps]
-protected def id (A : AbstractClone) : AbstractClone.Hom A A where
+protected def id (A : AbstractClone.{u}) : AbstractClone.Hom A A where
   hom := id
   υ_comm _ := rfl
   μ_comm _ _ := rfl
 
 @[simps]
-protected def comp {A B C : AbstractClone} (f : AbstractClone.Hom A B) (g : AbstractClone.Hom B C) :
-    AbstractClone.Hom A C where
+protected def comp {A B C : AbstractClone.{u}} (f : AbstractClone.Hom A B)
+    (g : AbstractClone.Hom B C) : AbstractClone.Hom A C where
   hom := g.hom ∘ f.hom
   υ_comm _ := by simp
   μ_comm _ _ := by simp
