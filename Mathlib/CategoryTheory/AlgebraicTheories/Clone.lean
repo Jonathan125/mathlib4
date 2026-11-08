@@ -45,10 +45,10 @@ structure AbstractClone : Type (u + 1) where
   c : ℕ → Type u
   υ {n : ℕ} : Fin n → c n
   μ {m n : ℕ} : c m → (Fin m → c n) → c n
-  projection {m n : ℕ} (i : Fin m) (xs : Fin m → c n) : μ (υ i) xs = xs i
-  identity {n : ℕ} (x : c n) : μ x υ = x
+  projection {m n : ℕ} (i : Fin m) (xs : Fin m → c n) : μ (υ i) xs = xs i := by cat_disch
+  identity {n : ℕ} (x : c n) : μ x υ = x := by cat_disch
   associativity {m n k : ℕ} (x : c m) (ys : Fin m → c n) (zs : Fin n → c k) :
-    μ (μ x ys) zs = μ x (fun i ↦ μ (ys i) zs)
+    μ (μ x ys) zs = μ x (fun i ↦ μ (ys i) zs) := by cat_disch
 
 attribute [simp] AbstractClone.projection AbstractClone.identity AbstractClone.associativity
 
@@ -57,9 +57,9 @@ namespace AbstractClone
 
 protected structure Hom (A B : AbstractClone.{u}) : Type u where
   hom {n : ℕ} : A.c n → B.c n
-  υ_comm {n : ℕ} (i : Fin n) : hom (A.υ i) = B.υ i
+  υ_comm {n : ℕ} (i : Fin n) : hom (A.υ i) = B.υ i := by cat_disch
   μ_comm {m n : ℕ} (x : A.c m) (ys : Fin m → A.c n) :
-    hom (A.μ x ys) = B.μ (hom x) (fun i ↦ hom (ys i))
+    hom (A.μ x ys) = B.μ (hom x) (fun i ↦ hom (ys i)) := by cat_disch
 
 attribute [simp] AbstractClone.Hom.υ_comm AbstractClone.Hom.μ_comm
 

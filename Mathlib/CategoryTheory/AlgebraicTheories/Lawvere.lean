@@ -125,6 +125,20 @@ protected instance Cat : Category.{max u₂ v₂} LawvereTheory.{v₂, u₁, u�
   id := LawvereTheory.Hom.id
   comp := LawvereTheory.Hom.comp
 
+namespace Hom
+
+protected theorem obj_comm {A B : LawvereTheory.{v₂, u₁, u₂}} (f : LawvereTheory.Hom A B)
+    (n : FintypeCat.Skeleton.{u₁}) : B.F.obj n = f.G.obj (A.F.obj n) :=
+  congr_fun (congr_arg Functor.obj f.comm.symm) _
+
+protected theorem hom_comm {A B : LawvereTheory.{v₂, u₁, u₂}} (f : LawvereTheory.Hom A B)
+    {m n : FintypeCat.Skeleton.{u₁}} (g : m ⟶ n) :
+    B.F.map g = eqToHom (f.obj_comm m) ≫ f.G.map (A.F.map g) ≫ eqToHom (f.obj_comm n).symm :=
+  (conj_eqToHom_iff_heq (B.F.map g) (f.G.map (A.F.map g)) (f.obj_comm _) (f.obj_comm _)).mpr <|
+    Functor.hcongr_hom f.comm.symm <| g
+
+end Hom
+
 end LawvereTheory
 
 end AlgebraicTheories

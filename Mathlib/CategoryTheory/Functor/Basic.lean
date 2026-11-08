@@ -65,8 +65,8 @@ attribute [to_dual self (reorder := mk (map (X Y), map_comp (X Z, f g)))] Functo
 @[to_dual none]
 lemma Functor.map_comp_assoc {C : Type u₁} [Category* C] {D : Type u₂} [Category* D] (F : C ⥤ D)
     {X Y Z : C} (f : X ⟶ Y) (g : Y ⟶ Z) {W : D} (h : F.obj Z ⟶ W) :
-    (F.map (f ≫ g)) ≫ h = F.map f ≫ F.map g ≫ h := by
-  grind
+    (F.map (f ≫ g)) ≫ h = F.map f ≫ F.map g ≫ h :=
+  (F.map_comp f g =≫ h).trans <| Category.assoc _ _ _
 
 namespace Functor
 
