@@ -113,21 +113,14 @@ theorem congr_map (F : C ⥤ D) {X Y : C} {f g : X ⟶ Y}
     (h : f = g) : F.map f = F.map g := by
   rw [h]
 
-theorem comp_map_id (F : C ⥤ D) (G : D ⥤ E) (X : C) : G.map (F.map (𝟙 X)) = 𝟙 (G.obj (F.obj X)) :=
-  (congr_arg G.map <| F.map_id X).trans <| G.map_id <| F.obj X
-
-theorem comp_map_comp (F : C ⥤ D) (G : D ⥤ E) {X Y Z : C} (f : X ⟶ Y) (g : Y ⟶ Z) :
-    G.map (F.map (f ≫ g)) = G.map (F.map f) ≫ G.map (F.map g) :=
-  (congr_arg G.map <| F.map_comp f g).trans <| G.map_comp (F.map f) <| F.map g
-
 /-- `F ⋙ G` is the composition of a functor `F` and a functor `G` (`F` first, then `G`).
 -/
 @[simps (attr := grind =) obj, implicit_reducible]
 def comp (F : C ⥤ D) (G : D ⥤ E) : C ⥤ E where
   obj X := G.obj (F.obj X)
   map f := G.map (F.map f)
-  map_id := comp_map_id F G
-  map_comp := comp_map_comp F G
+  map_id X := (congr_arg G.map <| F.map_id X).trans <| G.map_id <| F.obj X
+  map_comp f g := (congr_arg G.map <| F.map_comp f g).trans <| G.map_comp (F.map f) <| F.map g
 
 /-- Notation for composition of functors. -/
 scoped[CategoryTheory] infixr:80 " ⋙ " => Functor.comp

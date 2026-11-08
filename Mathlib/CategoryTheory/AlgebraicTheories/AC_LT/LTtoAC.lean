@@ -197,7 +197,7 @@ protected def map {A B : LawvereTheory.{v₂, u₁, u₂}} (f : A ⟶ B) :
     LTtoAC.map_hom_comm_iso f hs
 
 
-def LT_func_AC : LawvereTheory.{v₂, u₁, u₂} ⥤ AbstractClone.{v₂} where
+protected def func : LawvereTheory.{v₂, u₁, u₂} ⥤ AbstractClone.{v₂} where
   obj A := LTtoAC.obj A.F
   map f := LTtoAC.map f
   map_id A := AbstractClone.Hom.ext <| funext <| fun _ ↦ funext <| fun f ↦ Eq.symm <|

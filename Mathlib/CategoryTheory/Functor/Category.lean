@@ -57,6 +57,13 @@ instance Functor.category : Category.{max u₁ v₂} (C ⥤ D) where
   Hom F G := NatTrans F G
   id F := NatTrans.id F
   comp α β := vcomp α β
+  id_comp _ := NatTrans.ext <| funext <| fun _ ↦ (NatTrans.vcomp_app _ _ _).trans <|
+    (NatTrans.id_app' _ _ =≫ _).trans <| Category.id_comp _
+  comp_id _ := NatTrans.ext <| funext <| fun _ ↦ (NatTrans.vcomp_app _ _ _).trans <|
+    (_ ≫= NatTrans.id_app' _ _).trans <| Category.comp_id _
+  assoc _ _ _ := NatTrans.ext <| funext <| fun _ ↦ (NatTrans.vcomp_app _ _ _).trans <|
+    (NatTrans.vcomp_app _ _ _ =≫ _).trans <| (Category.assoc _ _ _).trans <|
+    (_ ≫= NatTrans.vcomp_app _ _ _).symm.trans <| Eq.symm <| NatTrans.vcomp_app _ _ _
 
 namespace NatTrans
 

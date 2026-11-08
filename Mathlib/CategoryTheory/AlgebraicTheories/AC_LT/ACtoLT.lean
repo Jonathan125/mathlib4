@@ -111,7 +111,7 @@ protected def map {A B : AbstractClone.{u}} (f : A ⟶ B) : ACtoLT.obj A ⟶ ACt
   G := ACtoLT.map_hom f
   comm := ACtoLT.map_comm f
 
-def AC_func_LT : AbstractClone.{u} ⥤ LawvereTheory.{u, u, u} where
+protected def func : AbstractClone.{u} ⥤ LawvereTheory.{u, u, u} where
   obj := ACtoLT.obj
   map := ACtoLT.map
 
