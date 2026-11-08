@@ -46,40 +46,39 @@ universe u
 namespace ACtoLT
 
 
-protected def T (_ : AbstractClone.{u}) : Type u := ULift.{u} ℕ
+protected def obj_T (_ : AbstractClone.{u}) : Type u := ULift.{u} ℕ
 
-namespace T
+namespace obj_T
 
-protected def mk (A : AbstractClone.{u}) : ℕ → ACtoLT.T A := ULift.up
+protected def mk (A : AbstractClone.{u}) : ℕ → ACtoLT.obj_T A := ULift.up
 
-protected def len (A : AbstractClone.{u}) : ACtoLT.T A → ℕ := ULift.down
+protected def len (A : AbstractClone.{u}) : ACtoLT.obj_T A → ℕ := ULift.down
 
-end T
+end obj_T
 
 
-@[reducible]
-protected instance Cat (A : AbstractClone.{u}) : SmallCategory.{u} (ACtoLT.T A) where
+protected instance Cat (A : AbstractClone.{u}) : SmallCategory.{u} (ACtoLT.obj_T A) where
   Hom X Y := Fin X.len → A.c Y.len
   id X := A.υ
   comp f g := fun i ↦ A.μ (f i) g
 
 namespace Cat
 
-protected theorem hom_comp_app {A : AbstractClone.{u}} {X Y Z : ACtoLT.T A} (f : X ⟶ Y) (g : Y ⟶ Z)
-    (i : Fin X.len) : (f ≫ g) i = A.μ (f i) g :=
+protected theorem hom_comp_app {A : AbstractClone.{u}} {X Y Z : ACtoLT.obj_T A} (f : X ⟶ Y)
+    (g : Y ⟶ Z) (i : Fin X.len) : (f ≫ g) i = A.μ (f i) g :=
   rfl
 
 
 end Cat
 
-protected def F (A : AbstractClone.{u}) : FintypeCat.Skeleton.{u} ⥤ ACtoLT.T A where
+protected def obj_F (A : AbstractClone.{u}) : FintypeCat.Skeleton.{u} ⥤ ACtoLT.obj_T A where
   obj := id
   map f := fun i ↦ A.υ (f ⟨i⟩).down
   map_comp f g :=
     funext <| fun i ↦ Eq.symm <| (ACtoLT.Cat.hom_comp_app _ _ i).trans <| A.projection _ _
 
 
-protected instance F_struct (A : AbstractClone.{u}) : LawvereStruct.{u, u, u} (ACtoLT.F A) where
+protected instance F_struct (A : AbstractClone.{u}) : LawvereStruct.{u, u, u} (ACtoLT.obj_F A) where
   objInv := id
   initial_to _ := fun i ↦ i.elim0
   coproduct_desc f g := Fin.append f g
@@ -95,75 +94,28 @@ protected instance F_struct (A : AbstractClone.{u}) : LawvereStruct.{u, u, u} (A
 
 
 protected def obj (A : AbstractClone.{u}) : LawvereTheory.{u, u, u} where
-  F := ACtoLT.F A
+  F := ACtoLT.obj_F A
+
+protected def map_hom {A B : AbstractClone.{u}} (f : A ⟶ B) : ACtoLT.obj_T A ⥤ ACtoLT.obj_T B where
+  obj := id
+  map g := fun i ↦ f.hom (g i)
+  map_id _ := funext <| fun _ ↦ f.υ_comm _
+  map_comp _ _ := funext <| fun _ ↦ f.μ_comm _ _
+
+protected theorem map_comm {A B : AbstractClone.{u}} (f : A ⟶ B) :
+    ACtoLT.obj_F A ⋙ ACtoLT.map_hom f = ACtoLT.obj_F B :=
+  Functor.ext (fun _ ↦ rfl) <| fun _ _ _ ↦ funext <| fun _ ↦ (f.υ_comm _).trans <| Eq.symm <|
+    (B.projection _ _).trans <| B.projection _ _
+
+protected def map {A B : AbstractClone.{u}} (f : A ⟶ B) : ACtoLT.obj A ⟶ ACtoLT.obj B where
+  G := ACtoLT.map_hom f
+  comm := ACtoLT.map_comm f
+
+def AC_func_LT : AbstractClone.{u} ⥤ LawvereTheory.{u, u, u} where
+  obj := ACtoLT.obj
+  map := ACtoLT.map
 
 end ACtoLT
-
-
--- @[reducible]
--- def F : 𝔸ℂ.{u} ⥤ 𝕃𝕋.{u, u} where
---   obj := F_obj
---   map {C₁ C₂ : 𝔸ℂ} (f : C₁ ⟶ C₂) := {
---     F := {
---       obj (n : 𝔽') := n
---       map {m n : 𝔽'} (g : tuple m.down (C₁.c n.down)) :=
---         tuple.mk λ i ↦ f.c_hom n.down (g.proj i)
-
---       map_id (n : 𝔽') := by
---         simp
---         apply tuple.ext
---         intro i
---         unfold CategoryStruct.id Category.toCategoryStruct F_obj F_cat
---         simp
---         rw [f.υ_hom]
-
---       map_comp
---         {m n k : 𝔽'}
---         (g : tuple m.down (C₁.c n.down))
---         (h : tuple n.down (C₁.c k.down))
---       := by
---         simp
---         apply tuple.ext
---         intro i
---         unfold comp Category.toCategoryStruct F_obj F_cat
---         simp
---         rw [f.μ_hom]
---     }
-
---     struct_comm := by
---       apply Functor.hext
---       . intro n
---         simp
---         rfl
---       . intro m n g
---         simp
---         apply tuple.ext
---         intro i
---         unfold F_obj
---         simp
---         unfold 𝕃𝕋.struct F_law_struct F_struct F_prestruct
---         simp
---         rw [f.υ_hom]
---   }
-
---   map_id (C : 𝔸ℂ) := by
---     simp
---     apply 𝕃𝕋_hom.ext
---     apply Functor.hext
---     . intro m
---       rfl
---     . intro m n f
---       simp
-
---   map_comp {C₁ C₂ C₃ : 𝔸ℂ} (f : C₁ ⟶ C₂) (g : C₂ ⟶ C₃) := by
---     simp
---     apply 𝕃𝕋_hom.ext
---     simp
---     apply Functor.hext
---     . intro m
---       rfl
---     . intro m n f
---       simp
 
 end AlgebraicTheories
 
