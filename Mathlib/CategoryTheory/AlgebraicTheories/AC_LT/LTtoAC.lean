@@ -39,7 +39,7 @@ namespace CategoryTheory
 namespace AlgebraicTheories
 
 
-universe v₂ u₁ u₂
+universe v₁ v₂ u₁ u₂
 
 theorem whisker_heq {C : Type u₂} [Category.{v₂} C] {W X Y Z : C} (f : W ⟶ X)
     (g : X ⟶ Y) (h : X ⟶ Z) : Y = Z → g ≍ h → f ≫ g ≍ f ≫ h := by
@@ -47,6 +47,12 @@ theorem whisker_heq {C : Type u₂} [Category.{v₂} C] {W X Y Z : C} (f : W ⟶
   obtain rfl : Y = Z := h'
   intro h'
   exact Eq.heq <| whisker_eq _ h'.eq
+
+@[simp]
+theorem map_eqToHom {C : Type u₁} [Category.{v₁} C] {D : Type u₂} [Category.{v₂} D] (F : C ⥤ D)
+    {X Y : C} (h : X = Y) : F.map (eqToHom h) = eqToHom (congr_arg F.obj h) := by
+  obtain rfl : X = Y := h
+  exact F.map_id _
 
 
 namespace LTtoAC
@@ -192,10 +198,15 @@ protected def map {A B : LawvereTheory.{v₂, u₁, u₂}} (f : A ⟶ B) :
 
 
 def LT_func_AC : LawvereTheory.{v₂, u₁, u₂} ⥤ AbstractClone.{v₂} where
-  obj L := LTtoAC.obj L.F
+  obj A := LTtoAC.obj A.F
   map f := LTtoAC.map f
-  map_id := sorry
-  map_comp := sorry
+  map_id A := AbstractClone.Hom.ext <| funext <| fun _ ↦ funext <| fun f ↦ Eq.symm <|
+    (AbstractClone.Hom.id_app _ _).trans <| Eq.symm <| (eqToHom_comp_iff (LawvereTheory.Hom.obj_comm
+    (𝟙 A) _).symm _ _).mpr <| (comp_eqToHom_iff (LawvereTheory.Hom.obj_comm (𝟙 A) _) _ _).mpr <|
+    Eq.symm <| (Category.assoc _ _ _).trans <| Eq.symm <| (LawvereTheory.Hom.id_map _ _).trans <|
+    (conj_eqToHom_iff_heq f f _ rfl).mpr <| HEq.refl _
+  map_comp f g := AbstractClone.Hom.ext <| funext <| fun _ ↦ funext <| fun _ ↦
+    (_ ≫= LawvereTheory.Hom.comp_map f g _ =≫ _).trans <| by simp [LTtoAC.map] ; rfl
 
 
 end LTtoAC

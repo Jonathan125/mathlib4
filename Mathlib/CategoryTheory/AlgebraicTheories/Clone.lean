@@ -55,6 +55,7 @@ attribute [simp] AbstractClone.projection AbstractClone.identity AbstractClone.a
 
 namespace AbstractClone
 
+@[ext]
 protected structure Hom (A B : AbstractClone.{u}) : Type u where
   hom {n : ℕ} : A.c n → B.c n
   υ_comm {n : ℕ} (i : Fin n) : hom (A.υ i) = B.υ i := by cat_disch
@@ -65,13 +66,11 @@ attribute [simp] AbstractClone.Hom.υ_comm AbstractClone.Hom.μ_comm
 
 namespace Hom
 
-@[simps]
 protected def id (A : AbstractClone.{u}) : AbstractClone.Hom A A where
   hom := id
   υ_comm _ := rfl
   μ_comm _ _ := rfl
 
-@[simps]
 protected def comp {A B C : AbstractClone.{u}} (f : AbstractClone.Hom A B)
     (g : AbstractClone.Hom B C) : AbstractClone.Hom A C where
   hom := g.hom ∘ f.hom
@@ -85,6 +84,18 @@ protected instance Cat : LargeCategory.{u} AbstractClone.{u} where
   id := AbstractClone.Hom.id
   comp := AbstractClone.Hom.comp
 
+
+namespace Hom
+
+@[simp]
+protected theorem id_app (A : AbstractClone.{u}) {n : ℕ} (X : A.c n) :
+    AbstractClone.Hom.hom (𝟙 A) X = X := rfl
+
+@[simp]
+protected theorem comp_app {A B C : AbstractClone.{u}} (f : A ⟶ B) (g : B ⟶ C) {n : ℕ}
+    (X : A.c n) : AbstractClone.Hom.hom (f ≫ g) X = g.hom (f.hom X) := rfl
+
+end Hom
 
 end AbstractClone
 

@@ -98,6 +98,7 @@ namespace LawvereTheory
 In Mathlib, Functor composition depends on the Classical.choice axiom.
 We are unable to define a morphism of Lawvere theories without introducing the axiom of choice.
 -/
+@[ext]
 protected structure Hom (A B : LawvereTheory.{v₂, u₁, u₂}) where
   G : A.T ⥤ B.T
   comm : A.F ⋙ G = B.F := by cat_disch
@@ -126,6 +127,14 @@ protected instance Cat : Category.{max u₂ v₂} LawvereTheory.{v₂, u₁, u�
   comp := LawvereTheory.Hom.comp
 
 namespace Hom
+
+@[simp]
+protected theorem id_map (A : LawvereTheory.{v₂, u₁, u₂}) {X Y : A.T} (f : X ⟶ Y) :
+    (LawvereTheory.Hom.G (𝟙 A)).map f = f := rfl
+
+@[simp]
+protected theorem comp_map {A B C : LawvereTheory.{v₂, u₁, u₂}} (f : A ⟶ B) (g : B ⟶ C) {X Y : A.T}
+    (h : X ⟶ Y) : (f ≫ g).G.map h = g.G.map (f.G.map h) := rfl
 
 protected theorem obj_comm {A B : LawvereTheory.{v₂, u₁, u₂}} (f : LawvereTheory.Hom A B)
     (n : FintypeCat.Skeleton.{u₁}) : B.F.obj n = f.G.obj (A.F.obj n) :=
