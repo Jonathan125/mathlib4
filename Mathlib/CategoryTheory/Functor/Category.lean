@@ -57,6 +57,13 @@ instance Functor.category : Category.{max u₁ v₂} (C ⥤ D) where
   Hom F G := NatTrans F G
   id F := NatTrans.id F
   comp α β := vcomp α β
+  id_comp _ := NatTrans.ext <| funext <| fun _ ↦ (NatTrans.vcomp_app _ _ _).trans <|
+    (NatTrans.id_app' _ _ =≫ _).trans <| Category.id_comp _
+  comp_id _ := NatTrans.ext <| funext <| fun _ ↦ (NatTrans.vcomp_app _ _ _).trans <|
+    (_ ≫= NatTrans.id_app' _ _).trans <| Category.comp_id _
+  assoc _ _ _ := NatTrans.ext <| funext <| fun _ ↦ (NatTrans.vcomp_app _ _ _).trans <|
+    (NatTrans.vcomp_app _ _ _ =≫ _).trans <| (Category.assoc _ _ _).trans <|
+    (_ ≫= NatTrans.vcomp_app _ _ _).symm.trans <| Eq.symm <| NatTrans.vcomp_app _ _ _
 
 namespace NatTrans
 
@@ -102,6 +109,17 @@ lemma naturality_inv {F G : C ⥤ D} (α : F ⟶ G) {X Y : C} (f : X ⟶ Y) [IsI
     inv (α.app X) ≫ F.map f = G.map f ≫ inv (α.app Y) := by
   rw [IsIso.inv_comp_eq, ← Category.assoc, IsIso.eq_comp_inv]
   exact α.naturality f
+
+theorem naturality_inv' {F G : C ⥤ D} (α : F ⟶ G) (β : ∀ X, G.obj X ⟶ F.obj X) :
+    (∀ X, α.app X ≫ β X = 𝟙 (F.obj X)) → (∀ X, β X ≫ α.app X = 𝟙 (G.obj X)) →
+    ∀ {X Y : C} f, G.map f ≫ β Y = β X ≫ F.map f := fun hl hr _ _ f ↦
+  suffices G.map f ≫ β _ ≫ α.app _ = β _ ≫ F.map f ≫ α.app _ from
+    (Category.comp_id _).symm.trans <| (_ ≫= hl _).symm.trans <|
+    (Category.assoc _ _ _).symm.trans <| (Category.assoc _ _ _ =≫ _).trans <|
+    (this =≫ _).trans <| (Category.assoc _ _ _).trans <| (_ ≫= Category.assoc _ _ _).trans <|
+    (_ ≫= _ ≫= hl _).trans <| _ ≫= Category.comp_id _
+  (_ ≫= hr _).trans <| (Category.comp_id _).trans <| Eq.symm <| (_ ≫= α.naturality _).trans <|
+  (Category.assoc _ _ _).symm.trans <| (hr _ =≫ _).trans <| Category.id_comp _
 
 /-- A natural transformation is an epimorphism if each component is. -/
 @[to_dual /-- A natural transformation is a monomorphism if each component is. -/]
