@@ -109,7 +109,6 @@ protected def counit_inv_app (A : LawvereTheory.{u}) : A ⟶ ACtoLT.obj (LTtoAC.
     (A.bijectionOnObjects.right_inv _).symm _ _).mp <| HEq.eq <| (comp_eqToHom_heq _ _).trans <|
     ACtoLT.Cat.hcongr_eqToHom_app _ _
 
-
 protected theorem coproducts_iso_hom_comm_eqToHom (A : LawvereTheory.{u, u, u})
     {X Y : (ACtoLT.obj (LTtoAC.obj A.F)).T} (f : X ⟶ Y) :
     LTtoAC.coproduct_iso_hom A.F f ≫ eqToHom (A.bijectionOnObjects.right_inv _).symm =
