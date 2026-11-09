@@ -206,7 +206,7 @@ protected def func : LawvereTheory.{v₂, u₁, u₂} ⥤ AbstractClone.{v₂} w
     Eq.symm <| (Category.assoc _ _ _).trans <| Eq.symm <| (LawvereTheory.Hom.id_map _ _).trans <|
     (conj_eqToHom_iff_heq f f _ rfl).mpr <| HEq.refl _
   map_comp f g := AbstractClone.Hom.ext <| funext <| fun _ ↦ funext <| fun _ ↦
-    (_ ≫= LawvereTheory.Hom.comp_map f g _ =≫ _).trans <| by simp [LTtoAC.map] ; rfl
+    (_ ≫= LawvereTheory.Hom.comp_map f g _ =≫ _).trans <| by simp [LTtoAC.map]
 
 
 end LTtoAC

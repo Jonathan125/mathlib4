@@ -42,6 +42,10 @@ namespace AC_LT
 
 universe u
 
+protected theorem unit_comp {X Y : FintypeCat.Skeleton.{u}} (f : X ⟶ Y) (i : Fin X.len) :
+    (fun (_ : ULift.{u} (Fin (FintypeCat.Skeleton.mk.{u} 1).len)) ↦ ⟨(f ⟨i⟩).down⟩)
+    = (fun _ ↦ ⟨i⟩) ≫ f := rfl
+
 protected def counit_hom_app_func (A : LawvereTheory.{u}) : ACtoLT.obj_T (LTtoAC.obj A.F) ⥤ A.T
     where
   obj n := A.F.obj n
@@ -54,12 +58,27 @@ protected def counit_hom_app_func (A : LawvereTheory.{u}) : ACtoLT.obj_T (LTtoAC
 
 protected def counit_hom_app (A : LawvereTheory.{u}) : ACtoLT.obj (LTtoAC.obj A.F) ⟶ A where
   G := AC_LT.counit_hom_app_func A
-  comm := sorry
+  comm := Functor.ext (fun X ↦ Functor.comp_obj _ _ X) <| fun _ _ _ ↦
+    (Functor.comp_map _ _ _).trans <| LTtoAC.coproduct_iso_inv_inj _ _ _ <|
+    (LTtoAC.coproduct_iso_hom_inv_id _ _).trans <| funext <| fun _ ↦
+    (congr_arg A.F.map (AC_LT.unit_comp _ _)).trans <| (A.F.map_comp _ _).trans <| whisker_eq _ <|
+    Eq.symm <| (Category.id_comp _).trans <| Category.comp_id _
 
 protected def counit_hom : LTtoAC.func.{u, u, u} ⋙ ACtoLT.func.{u} ⟶ 𝟭 LawvereTheory.{u, u, u}
     where
   app A := AC_LT.counit_hom_app A
-  naturality _ _ f := sorry
+  naturality _ _ f := (Functor.comp_map _ _ _ =≫ _).trans <| Eq.symm <|
+    (_ ≫= Functor.id_map _).trans <| LawvereTheory.Hom.ext <| Functor.ext (fun _ ↦ Eq.symm <|
+    LawvereTheory.Hom.obj_comm f _) <| fun _ _ _ ↦ (LawvereTheory.Hom.comp_map _ _ _).trans <|
+    Eq.symm <| (_ ≫= LawvereTheory.Hom.comp_map _ _ _ =≫ _).trans <| (eqToHom_comp_iff _ _ _).mpr <|
+    (comp_eqToHom_iff _ _ _).mpr <| LTtoAC.coproduct_iso_inv_inj _ _ _ <|
+    (LTtoAC.coproduct_iso_hom_inv_id _ _).trans <| funext <| fun i ↦ Eq.symm <|
+    (_ ≫= Category.assoc _ _ _).trans <| (LawvereTheory.Hom.hom_comm f _ =≫ _).trans <|
+    (Category.assoc _ _ _).trans <| whisker_eq _ <| (Category.assoc _ _ _).trans <|
+    (_ ≫= eqToHom_trans_assoc _ _ _).trans <| (_ ≫= Category.id_comp _).trans <|
+    (Category.assoc _ _ _).symm.trans <| (fun h ↦ eq_whisker h _) <|
+    (Functor.map_comp _ _ _).symm.trans <| congr_arg _ <|
+    congr_fun (LTtoAC.coproduct_iso_hom_inv_id _ _) i
 
 
 protected def counit_inv_app_func (A : LawvereTheory.{u}) : A.T ⥤ ACtoLT.obj_T (LTtoAC.obj A.F)
@@ -77,18 +96,38 @@ protected def counit_inv_app_func (A : LawvereTheory.{u}) : A.T ⥤ ACtoLT.obj_T
 
 protected def counit_inv_app (A : LawvereTheory.{u}) : A ⟶ ACtoLT.obj (LTtoAC.obj A.F) where
   G := AC_LT.counit_inv_app_func A
-  comm := sorry
+  comm := Functor.ext (fun X ↦ (Functor.comp_obj _ _ X).trans <|
+    Functor.BijectionOnObjects.left_inv_app A.F X) <| fun _ _ _ ↦ (Functor.comp_map _ _ _).trans <|
+    Eq.symm <| (eqToHom_comp_iff _ _ _).mpr <| (comp_eqToHom_iff _ _ _).mpr <| funext <| fun _ ↦
+    Eq.symm <| (ACtoLT.Cat.hom_comp_app _ _ _).trans <|
+    (congr_arg (fun x ↦ x ≫ _) (ACtoLT.Cat.hom_comp_app _ _ _ )).trans <|
+    ((_ ≫= LTtoAC.coproduct_iso_inv_hom_id _ _) =≫ _).trans <| Eq.symm <|
+    (congr_arg A.F.map (AC_LT.unit_comp _ _)).trans <| (A.F.map_comp _ _).trans <| Eq.symm <|
+    ((_ ≫= (Category.assoc _ _ _).symm) =≫ _).trans <| ((Category.assoc _ _ _).symm =≫ _).trans <|
+    (Category.assoc _ _ _).trans <| ((Category.assoc _ _ _).symm =≫ _).trans <|
+    (Category.assoc _ _ _).trans <| congr_arg₂ _ (HEq.eq <| (comp_eqToHom_heq _ _).trans <|
+    ACtoLT.Cat.hcongr_eqToHom_app _ _) <| Eq.symm <| (Category.comp_id _).symm.trans <|
+    whisker_eq _ <| (eqToHom_comp_iff (A.bijectionOnObjects.right_inv _) _ _).mp <|
+    (Category.comp_id _).trans <| Eq.symm <| LTtoAC.coproduct_iso_inv_inj _ _ _ <|
+    (LTtoAC.coproduct_iso_hom_inv_id _ _).trans <| funext <| fun _ ↦ (comp_eqToHom_iff
+    (A.bijectionOnObjects.right_inv _).symm _ _).mp <| HEq.eq <| (comp_eqToHom_heq _ _).trans <|
+    ACtoLT.Cat.hcongr_eqToHom_app _ _
+
 
 protected def counit_inv : 𝟭 LawvereTheory.{u, u, u} ⟶ LTtoAC.func.{u, u, u} ⋙ ACtoLT.func.{u}
     where
   app A := AC_LT.counit_inv_app A
+
+  -- Prove the isomorphism first, then use that to prove naturality (do in generality for
+  -- of functors isomorphism. Nat trans one way, and a collection of apps the other ways that is
+  -- the inverse)
   naturality _ _ f := sorry
 
 
 protected def counit : LTtoAC.func.{u, u, u} ⋙ ACtoLT.func.{u} ≅ 𝟭 LawvereTheory.{u, u, u} where
   hom := AC_LT.counit_hom
   inv := AC_LT.counit_inv
-  hom_inv_id := sorry
+  hom_inv_id := by sorry
   inv_hom_id := sorry
 
 end AC_LT

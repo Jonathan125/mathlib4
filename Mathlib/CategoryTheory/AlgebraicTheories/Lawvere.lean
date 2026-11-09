@@ -137,6 +137,10 @@ protected theorem id_map (A : LawvereTheory.{v₂, u₁, u₂}) {X Y : A.T} (f :
     (LawvereTheory.Hom.G (𝟙 A)).map f = f := rfl
 
 @[simp]
+protected theorem comp_obj {A B C : LawvereTheory.{v₂, u₁, u₂}} (f : A ⟶ B) (g : B ⟶ C) (X : A.T) :
+    (f ≫ g).G.obj X = g.G.obj (f.G.obj X) := rfl
+
+@[simp]
 protected theorem comp_map {A B C : LawvereTheory.{v₂, u₁, u₂}} (f : A ⟶ B) (g : B ⟶ C) {X Y : A.T}
     (h : X ⟶ Y) : (f ≫ g).G.map h = g.G.map (f.G.map h) := rfl
 
