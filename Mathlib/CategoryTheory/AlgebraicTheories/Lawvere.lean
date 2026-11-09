@@ -5,7 +5,7 @@ Authors: Jonathan Konig
 -/
 import Mathlib.CategoryTheory.FintypeCat
 import Mathlib.CategoryTheory.Functor.BijectionOnObjects
-import Mathlib.CategoryTheory.Limits.IndexCategory.Basic
+import Mathlib.CategoryTheory.Limits.IndexCategory
 
 
 /-!

@@ -163,8 +163,6 @@ theorem coproduct_hom_ext {m n k : FintypeCat.Skeleton.{u}} (f g : m + n ⟶ k) 
     (coproduct_hom_unique _ _ _ rfl rfl).symm
 
 
-
-
 protected def initial_coproduct_square (m n : FintypeCat.Skeleton.{u}) :
     Square FintypeCat.Skeleton.{u} where
   f₁₂ := FintypeCat.Skeleton.zero_to m
@@ -172,8 +170,6 @@ protected def initial_coproduct_square (m n : FintypeCat.Skeleton.{u}) :
   f₂₄ := FintypeCat.Skeleton.to_initial_segment m n
   f₃₄ := FintypeCat.Skeleton.to_concluding_segment m n
   fac := FintypeCat.Skeleton.zero_to_uniq _ _
-
-
 
 
 /-- Depends on Classical.choice -/
