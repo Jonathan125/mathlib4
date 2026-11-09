@@ -139,6 +139,20 @@ theorem heq_comp {C} [Category* C] {X Y Z X' Y' Z' : C}
     f ≫ g ≍ f' ≫ g' := by
   congr!
 
+theorem whisker_heq {C : Type u₁} [Category.{v₁} C] {W X Y Z : C} {f : W ⟶ X}
+    {g : X ⟶ Y} (h : X ⟶ Z) : Y = Z → g ≍ h → f ≫ g ≍ f ≫ h := by
+  intro h'
+  obtain rfl : Y = Z := h'
+  intro h'
+  exact heq_iff_eq.mpr <| whisker_eq _ <| heq_iff_eq.mp h'
+
+theorem heq_whisker {C : Type u₁} [Category.{v₁} C] {W X Y Z : C} {f : W ⟶ Y}
+    {g : X ⟶ Y} : W = X → (h : Y ⟶ Z) → f ≍ g → f ≫ h ≍ g ≫ h := by
+  intro h' h
+  obtain rfl : W = X := h'
+  intro h'
+  exact heq_iff_eq.mpr <| eq_whisker (heq_iff_eq.mp h') _
+
 variable {β : Sort*}
 
 /-- We can push `eqToHom` to the left through families of morphisms. -/
