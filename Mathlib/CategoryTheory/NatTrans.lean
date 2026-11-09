@@ -75,7 +75,9 @@ namespace NatTrans
 
 /-- `NatTrans.id F` is the identity natural transformation on a functor `F`. -/
 @[implicit_reducible]
-protected def id (F : C ⥤ D) : NatTrans F F where app X := 𝟙 (F.obj X)
+protected def id (F : C ⥤ D) : NatTrans F F where
+  app X := 𝟙 (F.obj X)
+  naturality _ _ _ := (Category.comp_id _).trans (Category.id_comp _).symm
 
 @[simp]
 theorem id_app' (F : C ⥤ D) (X : C) : (NatTrans.id F).app X = 𝟙 (F.obj X) := rfl
@@ -92,6 +94,8 @@ variable {F G H : C ⥤ D}
 @[implicit_reducible, to_dual self (reorder := F H, α β)]
 def vcomp (α : NatTrans F G) (β : NatTrans G H) : NatTrans F H where
   app X := α.app X ≫ β.app X
+  naturality _ _ f := (Category.assoc _ _ _).symm.trans <| (α.naturality f =≫ _).trans <|
+    (Category.assoc _ _ _).trans <| (_ ≫= β.naturality f).trans <| Eq.symm <| Category.assoc _ _ _
 
 -- functor_category will rewrite (vcomp α β) to (α ≫ β), so this is not a
 -- suitable simp lemma.  We will declare the variant vcomp_app' there.
