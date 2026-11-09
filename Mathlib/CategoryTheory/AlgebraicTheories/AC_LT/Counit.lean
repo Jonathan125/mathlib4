@@ -49,9 +49,8 @@ protected def counit_hom_app_func (A : LawvereTheory.{u}) : ACtoLT.obj_T (LTtoAC
   map_id _ := LTtoAC.coproduct_iso_inv_inj _ _ _ <| (LTtoAC.coproduct_iso_hom_inv_id _ _).trans <|
     funext <| fun _ ↦ Eq.symm <| Category.comp_id _
   map_comp _ _ := LTtoAC.coproduct_iso_inv_inj _ _ _ <|
-    (LTtoAC.coproduct_iso_hom_inv_id _ _).trans <| funext <| fun i ↦
-    (ACtoLT.Cat.hom_comp_app _ _ _).trans <| Eq.symm <| (Category.assoc _ _ _).symm.trans <|
-    congr_fun (LTtoAC.coproduct_iso_hom_inv_id A.F _) i =≫ _
+    (LTtoAC.coproduct_iso_hom_inv_id _ _).trans <| funext <| fun i ↦ Eq.symm <|
+    (Category.assoc _ _ _).symm.trans <| congr_fun (LTtoAC.coproduct_iso_hom_inv_id A.F _) i =≫ _
 
 protected def counit_hom_app (A : LawvereTheory.{u}) : ACtoLT.obj (LTtoAC.obj A.F) ⟶ A where
   G := AC_LT.counit_hom_app_func A
@@ -70,11 +69,10 @@ protected def counit_inv_app_func (A : LawvereTheory.{u}) : A.T ⥤ ACtoLT.obj_T
     eqToHom (A.bijectionOnObjects.right_inv _).symm)
   map_id _ := funext <| fun _ ↦ (_ ≫= _ ≫= Category.id_comp _).trans <|
     (_ ≫= eqToHom_trans _ _).trans <| Category.comp_id _
-  map_comp _ g := funext <| fun _ ↦ Eq.symm <| (ACtoLT.Cat.hom_comp_app _ _ _).trans <| (_ ≫=
-    LTtoAC.coproduct_iso_inv_hom_id A.F (eqToHom (A.bijectionOnObjects.right_inv _) ≫ g ≫
-    eqToHom (A.bijectionOnObjects.right_inv _).symm)).trans <| (Category.assoc _ _ _).trans <|
-    whisker_eq _ <| (Category.assoc _ _ _).trans <| whisker_eq _ <| (Category.assoc _ _ _).trans <|
-    (_ ≫= eqToHom_trans_assoc _ _ _).trans <| (_ ≫= eqToHom_refl _ _ =≫ _).trans <|
+  map_comp _ g := funext <| fun _ ↦ Eq.symm <| (_ ≫= LTtoAC.coproduct_iso_inv_hom_id A.F
+    (eqToHom (A.bijectionOnObjects.right_inv _) ≫ g ≫ eqToHom _)).trans <|
+    (Category.assoc _ _ _).trans <| whisker_eq _ <| (Category.assoc _ _ _).trans <| whisker_eq _ <|
+    (Category.assoc _ _ _).trans <| (_ ≫= eqToHom_trans_assoc _ _ _).trans <|
     (_ ≫= Category.id_comp _).trans <| Eq.symm <| Category.assoc _ _ _
 
 protected def counit_inv_app (A : LawvereTheory.{u}) : A ⟶ ACtoLT.obj (LTtoAC.obj A.F) where
