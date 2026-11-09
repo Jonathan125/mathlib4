@@ -38,38 +38,22 @@ namespace CategoryTheory
 
 namespace AlgebraicTheories
 
-
-universe v₁ v₂ u₁ u₂
-
-theorem whisker_heq {C : Type u₂} [Category.{v₂} C] {W X Y Z : C} (f : W ⟶ X)
-    (g : X ⟶ Y) (h : X ⟶ Z) : Y = Z → g ≍ h → f ≫ g ≍ f ≫ h := by
-  intro h'
-  obtain rfl : Y = Z := h'
-  intro h'
-  exact Eq.heq <| whisker_eq _ h'.eq
-
-@[simp]
-theorem map_eqToHom {C : Type u₁} [Category.{v₁} C] {D : Type u₂} [Category.{v₂} D] (F : C ⥤ D)
-    {X Y : C} (h : X = Y) : F.map (eqToHom h) = eqToHom (congr_arg F.obj h) := by
-  obtain rfl : X = Y := h
-  exact F.map_id _
-
+universe v₂ u₁ u₂
 
 namespace LTtoAC
 
-
-protected def coproduct_iso_hom_aux {T : Type u₂} [Category.{v₂} T]
+protected def coproduct_iso_hom_rec {T : Type u₂} [Category.{v₂} T]
     (F : FintypeCat.Skeleton.{u₁} ⥤ T) [LawvereStruct F] {m : ℕ} {n : FintypeCat.Skeleton.{u₁}}
     (fs : Fin m → (F.obj (FintypeCat.Skeleton.mk.{u₁} 1) ⟶ F.obj n)) : F.obj ⟨m⟩ ⟶ F.obj n :=
   match m with
   | 0 => LawvereStruct.initial_to _
-  | _ + 1 => LawvereStruct.coproduct_desc (LTtoAC.coproduct_iso_hom_aux F (fs ∘ Fin.castSucc)) <|
+  | _ + 1 => LawvereStruct.coproduct_desc (LTtoAC.coproduct_iso_hom_rec F (fs ∘ Fin.castSucc)) <|
     fs <| Fin.last _
 
 protected def coproduct_iso_hom {T : Type u₂} [Category.{v₂} T] (F : FintypeCat.Skeleton.{u₁} ⥤ T)
     [LawvereStruct F] {m n : FintypeCat.Skeleton.{u₁}}
     (fs : Fin m.len → (F.obj (FintypeCat.Skeleton.mk.{u₁} 1) ⟶ F.obj n)) : F.obj m ⟶ F.obj n :=
-  LTtoAC.coproduct_iso_hom_aux F fs
+  LTtoAC.coproduct_iso_hom_rec F fs
 
 
 protected def coproduct_iso_inv {T : Type u₂} [Category.{v₂} T] (F : FintypeCat.Skeleton.{u₁} ⥤ T)
@@ -94,7 +78,7 @@ protected theorem coproduct_iso_hom_inv_id_aux {T : Type u₂} [Category.{v₂} 
       replace hi := Fin.eq_last_of_not_lt hi
       subst hi
       exact Eq.symm <|
-        (LawvereStruct.coproduct_fac_right (LTtoAC.coproduct_iso_hom_aux F (fs ∘ Fin.castSucc))
+        (LawvereStruct.coproduct_fac_right (LTtoAC.coproduct_iso_hom_rec F (fs ∘ Fin.castSucc))
         (fs (Fin.last m))).symm.trans <| eq_whisker (congr_arg _ <| funext <| fun ⟨i⟩ ↦
         ULift.up_inj.mpr <| Fin.eq_of_val_eq <| (Nat.add_right_inj.mpr
         (Nat.lt_one_iff.mp i.isLt)).trans <| Nat.add_zero m) _
@@ -112,7 +96,7 @@ protected theorem coproduct_iso_inv_hom_id_aux {T : Type u₂} [Category.{v₂} 
   induction m with
   | zero => exact (LawvereStruct.initial_uniq _).trans (LawvereStruct.initial_uniq _).symm
   | succ m ih =>
-    simp only [LTtoAC.coproduct_iso_hom, LTtoAC.coproduct_iso_hom_aux]
+    simp only [LTtoAC.coproduct_iso_hom, LTtoAC.coproduct_iso_hom_rec]
     apply Eq.symm
     apply (LawvereStruct.coproduct_uniq (F.map (FintypeCat.Skeleton.to_initial_segment _ _) ≫ f)
       (F.map (FintypeCat.Skeleton.to_concluding_segment _ _) ≫ f) f rfl rfl).trans
@@ -169,20 +153,20 @@ protected theorem map_hom_comm_iso {A B : LawvereTheory.{v₂, u₁, u₂}} (f :
   induction m with
   | zero => exact (LawvereStruct.initial_uniq _).symm
   | succ m ih =>
-    simp only [LTtoAC.coproduct_iso_hom, LTtoAC.coproduct_iso_hom_aux]
+    simp only [LTtoAC.coproduct_iso_hom, LTtoAC.coproduct_iso_hom_rec]
     apply Eq.symm
     apply LawvereStruct.coproduct_uniq
     · apply (eq_whisker (f.hom_comm _) _).trans
       simp only [← Functor.map_comp_assoc, Category.assoc, eqToHom_trans_assoc, eqToHom_refl,
         Category.id_comp]
       exact (_ ≫= congr_arg f.G.map (LawvereStruct.coproduct_fac_left
-        (LTtoAC.coproduct_iso_hom_aux A.F (hs ∘ Fin.castSucc)) (hs (Fin.last m))) =≫ _).trans <|
+        (LTtoAC.coproduct_iso_hom_rec A.F (hs ∘ Fin.castSucc)) (hs (Fin.last m))) =≫ _).trans <|
         Eq.symm <| ih _
     · apply (eq_whisker (f.hom_comm _) _).trans
       simp only [← Functor.map_comp_assoc, Category.assoc, eqToHom_trans_assoc, eqToHom_refl,
         Category.id_comp]
       exact _ ≫= congr_arg f.G.map (LawvereStruct.coproduct_fac_right
-        (LTtoAC.coproduct_iso_hom_aux A.F (hs ∘ Fin.castSucc)) (hs (Fin.last m))) =≫ _
+        (LTtoAC.coproduct_iso_hom_rec A.F (hs ∘ Fin.castSucc)) (hs (Fin.last m))) =≫ _
 
 
 protected def map {A B : LawvereTheory.{v₂, u₁, u₂}} (f : A ⟶ B) :
@@ -191,10 +175,9 @@ protected def map {A B : LawvereTheory.{v₂, u₁, u₂}} (f : A ⟶ B) :
   υ_comm _ := Eq.symm <| f.hom_comm _
   μ_comm g hs := HEq.eq <| (eqToHom_comp_heq _ _).trans <| (comp_eqToHom_heq _ _).trans <|
     (f.G.map_comp g _).heq.trans <| HEq.symm <| (Category.assoc _ _ _).heq.trans <|
-    (eqToHom_comp_heq _ _).trans <| (Category.assoc _ _ _).heq.trans <| whisker_heq
-    (f.G.map g) _ _ (f.obj_comm _) <| (eqToHom_comp_heq _ _).trans <|
-    (conj_eqToHom_iff_heq _ _ (f.obj_comm _) (f.obj_comm _)).mp <|
-    LTtoAC.map_hom_comm_iso f hs
+    (eqToHom_comp_heq _ _).trans <| (Category.assoc _ _ _).heq.trans <| whisker_heq _
+    (f.obj_comm _) <| (eqToHom_comp_heq _ _).trans <| (conj_eqToHom_iff_heq _ _ (f.obj_comm _)
+    (f.obj_comm _)).mp <| LTtoAC.map_hom_comm_iso f hs
 
 
 protected def func : LawvereTheory.{v₂, u₁, u₂} ⥤ AbstractClone.{v₂} where
@@ -206,7 +189,7 @@ protected def func : LawvereTheory.{v₂, u₁, u₂} ⥤ AbstractClone.{v₂} w
     Eq.symm <| (Category.assoc _ _ _).trans <| Eq.symm <| (LawvereTheory.Hom.id_map _ _).trans <|
     (conj_eqToHom_iff_heq f f _ rfl).mpr <| HEq.refl _
   map_comp f g := AbstractClone.Hom.ext <| funext <| fun _ ↦ funext <| fun _ ↦
-    (_ ≫= LawvereTheory.Hom.comp_map f g _ =≫ _).trans <| by simp [LTtoAC.map]
+    (_ ≫= LawvereTheory.Hom.comp_map f g _ =≫ _).trans <| by simp [LTtoAC.map, eqToHom_map]
 
 
 end LTtoAC
