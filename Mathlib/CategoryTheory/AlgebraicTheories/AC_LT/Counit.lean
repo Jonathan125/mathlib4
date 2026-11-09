@@ -42,10 +42,6 @@ namespace AC_LT
 
 universe u
 
-protected theorem unit_comp {X Y : FintypeCat.Skeleton.{u}} (f : X ⟶ Y) (i : Fin X.len) :
-    (fun (_ : ULift.{u} (Fin (FintypeCat.Skeleton.mk.{u} 1).len)) ↦ ⟨(f ⟨i⟩).down⟩)
-    = (fun _ ↦ ⟨i⟩) ≫ f := rfl
-
 protected def counit_hom_app_func (A : LawvereTheory.{u}) : ACtoLT.obj_T (LTtoAC.obj A.F) ⥤ A.T
     where
   obj n := A.F.obj n
@@ -60,8 +56,8 @@ protected def counit_hom_app (A : LawvereTheory.{u}) : ACtoLT.obj (LTtoAC.obj A.
   G := AC_LT.counit_hom_app_func A
   comm := Functor.ext (fun X ↦ Functor.comp_obj _ _ X) <| fun _ _ _ ↦
     (Functor.comp_map _ _ _).trans <| LTtoAC.coproduct_iso_inv_inj _ _ _ <|
-    (LTtoAC.coproduct_iso_hom_inv_id _ _).trans <| funext <| fun _ ↦
-    (congr_arg A.F.map (AC_LT.unit_comp _ _)).trans <| (A.F.map_comp _ _).trans <| whisker_eq _ <|
+    (LTtoAC.coproduct_iso_hom_inv_id _ _).trans <| funext <| fun _ ↦ (congr_arg A.F.map
+    (FintypeCat.Skeleton.const_comp _ _)).trans <| (A.F.map_comp _ _).trans <| whisker_eq _ <|
     Eq.symm <| (Category.id_comp _).trans <| Category.comp_id _
 
 protected def counit_hom : LTtoAC.func.{u, u, u} ⋙ ACtoLT.func.{u} ⟶ 𝟭 LawvereTheory.{u, u, u}
@@ -101,8 +97,8 @@ protected def counit_inv_app (A : LawvereTheory.{u}) : A ⟶ ACtoLT.obj (LTtoAC.
     Eq.symm <| (eqToHom_comp_iff _ _ _).mpr <| (comp_eqToHom_iff _ _ _).mpr <| funext <| fun _ ↦
     Eq.symm <| (ACtoLT.Cat.hom_comp_app _ _ _).trans <|
     (congr_arg (fun x ↦ x ≫ _) (ACtoLT.Cat.hom_comp_app _ _ _ )).trans <|
-    ((_ ≫= LTtoAC.coproduct_iso_inv_hom_id _ _) =≫ _).trans <| Eq.symm <|
-    (congr_arg A.F.map (AC_LT.unit_comp _ _)).trans <| (A.F.map_comp _ _).trans <| Eq.symm <|
+    ((_ ≫= LTtoAC.coproduct_iso_inv_hom_id _ _) =≫ _).trans <| Eq.symm <| (congr_arg A.F.map
+    (FintypeCat.Skeleton.const_comp _ _)).trans <| (A.F.map_comp _ _).trans <| Eq.symm <|
     ((_ ≫= (Category.assoc _ _ _).symm) =≫ _).trans <| ((Category.assoc _ _ _).symm =≫ _).trans <|
     (Category.assoc _ _ _).trans <| ((Category.assoc _ _ _).symm =≫ _).trans <|
     (Category.assoc _ _ _).trans <| congr_arg₂ _ (HEq.eq <| (comp_eqToHom_heq _ _).trans <|
@@ -114,21 +110,40 @@ protected def counit_inv_app (A : LawvereTheory.{u}) : A ⟶ ACtoLT.obj (LTtoAC.
     ACtoLT.Cat.hcongr_eqToHom_app _ _
 
 
+protected theorem coproducts_iso_hom_comm_eqToHom (A : LawvereTheory.{u, u, u})
+    {X Y : (ACtoLT.obj (LTtoAC.obj A.F)).T} (f : X ⟶ Y) :
+    LTtoAC.coproduct_iso_hom A.F f ≫ eqToHom (A.bijectionOnObjects.right_inv _).symm =
+    LTtoAC.coproduct_iso_hom A.F (f ≫ eqToHom (A.bijectionOnObjects.left_inv _).symm) := by
+  apply HEq.eq
+  apply (comp_eqToHom_heq _ _).trans
+  congr
+  · exact (A.bijectionOnObjects.left_inv _).symm
+  · exact (comp_eqToHom_heq _ _).symm
+
+protected theorem counit_hom_inv_id (A : LawvereTheory.{u}) :
+    AC_LT.counit_hom_app A ≫ AC_LT.counit_inv_app A = 𝟙 _ := LawvereTheory.Hom.ext <|
+  Functor.ext A.bijectionOnObjects.left_inv <| fun _ _ _ ↦ Eq.symm <| funext <| fun _ ↦
+  (ACtoLT.Cat.hom_comp_app _ _ _).trans <| Eq.symm <| (Category.assoc _ _ _).symm.trans <|
+  congr_arg₂ _ ((comp_eqToHom_iff _ _ _).mpr <| Eq.symm <| HEq.eq <| (comp_eqToHom_heq _ _).trans <|
+  ACtoLT.Cat.hcongr_eqToHom_app _ _) <| AC_LT.coproducts_iso_hom_comm_eqToHom _ _
+
+protected theorem counit_inv_hom_id (A : LawvereTheory.{u}) :
+    AC_LT.counit_inv_app A ≫ AC_LT.counit_hom_app A = 𝟙 _ := LawvereTheory.Hom.ext <| Functor.ext
+    A.bijectionOnObjects.right_inv <| fun _ _ _ ↦ LTtoAC.coproduct_iso_inv_hom_id _ _
+
+
 protected def counit_inv : 𝟭 LawvereTheory.{u, u, u} ⟶ LTtoAC.func.{u, u, u} ⋙ ACtoLT.func.{u}
     where
   app A := AC_LT.counit_inv_app A
-
-  -- Prove the isomorphism first, then use that to prove naturality (do in generality for
-  -- of functors isomorphism. Nat trans one way, and a collection of apps the other ways that is
-  -- the inverse)
-  naturality _ _ f := sorry
+  naturality _ _ f := NatTrans.naturality_inv' AC_LT.counit_hom AC_LT.counit_inv_app
+    AC_LT.counit_hom_inv_id AC_LT.counit_inv_hom_id f
 
 
 protected def counit : LTtoAC.func.{u, u, u} ⋙ ACtoLT.func.{u} ≅ 𝟭 LawvereTheory.{u, u, u} where
   hom := AC_LT.counit_hom
   inv := AC_LT.counit_inv
-  hom_inv_id := by sorry
-  inv_hom_id := sorry
+  hom_inv_id := NatTrans.ext <| funext <| AC_LT.counit_hom_inv_id
+  inv_hom_id := NatTrans.ext <| funext <| AC_LT.counit_inv_hom_id
 
 end AC_LT
 

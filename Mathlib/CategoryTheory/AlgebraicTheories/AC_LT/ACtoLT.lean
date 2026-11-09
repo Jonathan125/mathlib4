@@ -72,8 +72,6 @@ protected theorem hcongr_eqToHom_app {A : AbstractClone.{u}} {X Y : ACtoLT.obj_T
     (i : Fin X.len) : eqToHom h i ≍ A.υ i :=
   by obtain rfl : X = Y := h ; rfl
 
--- (fun x ↦ { down := (f { down := i }).down }) = (fun x ↦ { down := i }) ≫ f
-
 end Cat
 
 protected def obj_F (A : AbstractClone.{u}) : FintypeCat.Skeleton.{u} ⥤ ACtoLT.obj_T A where

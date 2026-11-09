@@ -66,8 +66,9 @@ protected theorem zero_to_uniq {n : FintypeCat.Skeleton.{u}} (f g : FintypeCat.S
     f = g :=
   funext <| fun ⟨i⟩ ↦ i.elim0
 
-
-
+protected theorem const_comp {X Y : FintypeCat.Skeleton.{u}} (f : X ⟶ Y) (i : Fin X.len) :
+    (fun (_ : ULift.{u} (Fin (FintypeCat.Skeleton.mk.{u} 1).len)) ↦ ⟨(f ⟨i⟩).down⟩)
+    = (fun _ ↦ ⟨i⟩) ≫ f := rfl
 
 protected instance add :
     HAdd FintypeCat.Skeleton.{u} FintypeCat.Skeleton.{u} FintypeCat.Skeleton.{u} where

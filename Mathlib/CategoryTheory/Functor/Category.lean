@@ -110,6 +110,17 @@ lemma naturality_inv {F G : C ⥤ D} (α : F ⟶ G) {X Y : C} (f : X ⟶ Y) [IsI
   rw [IsIso.inv_comp_eq, ← Category.assoc, IsIso.eq_comp_inv]
   exact α.naturality f
 
+theorem naturality_inv' {F G : C ⥤ D} (α : F ⟶ G) (β : ∀ X, G.obj X ⟶ F.obj X) :
+    (∀ X, α.app X ≫ β X = 𝟙 (F.obj X)) → (∀ X, β X ≫ α.app X = 𝟙 (G.obj X)) →
+    ∀ {X Y : C} f, G.map f ≫ β Y = β X ≫ F.map f := fun hl hr _ _ f ↦
+  suffices G.map f ≫ β _ ≫ α.app _ = β _ ≫ F.map f ≫ α.app _ from
+    (Category.comp_id _).symm.trans <| (_ ≫= hl _).symm.trans <|
+    (Category.assoc _ _ _).symm.trans <| (Category.assoc _ _ _ =≫ _).trans <|
+    (this =≫ _).trans <| (Category.assoc _ _ _).trans <| (_ ≫= Category.assoc _ _ _).trans <|
+    (_ ≫= _ ≫= hl _).trans <| _ ≫= Category.comp_id _
+  (_ ≫= hr _).trans <| (Category.comp_id _).trans <| Eq.symm <| (_ ≫= α.naturality _).trans <|
+  (Category.assoc _ _ _).symm.trans <| (hr _ =≫ _).trans <| Category.id_comp _
+
 /-- A natural transformation is an epimorphism if each component is. -/
 @[to_dual /-- A natural transformation is a monomorphism if each component is. -/]
 theorem epi_of_epi_app (α : F ⟶ G) [∀ X : C, Epi (α.app X)] : Epi α :=
