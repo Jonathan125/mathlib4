@@ -94,6 +94,10 @@ attribute [instance] LawvereTheory.cat LawvereTheory.struct
 
 namespace LawvereTheory
 
+protected instance bijectionOnObjects (L : LawvereTheory.{v₂, u₁, u₂}) :
+    Functor.BijectionOnObjects L.F := by
+  infer_instance
+
 /--
 In Mathlib, Functor composition depends on the Classical.choice axiom.
 We are unable to define a morphism of Lawvere theories without introducing the axiom of choice.
