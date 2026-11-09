@@ -65,8 +65,8 @@ attribute [to_dual self (reorder := mk (map (X Y), map_comp (X Z, f g)))] Functo
 @[to_dual none]
 lemma Functor.map_comp_assoc {C : Type u₁} [Category* C] {D : Type u₂} [Category* D] (F : C ⥤ D)
     {X Y Z : C} (f : X ⟶ Y) (g : Y ⟶ Z) {W : D} (h : F.obj Z ⟶ W) :
-    (F.map (f ≫ g)) ≫ h = F.map f ≫ F.map g ≫ h := by
-  grind
+    (F.map (f ≫ g)) ≫ h = F.map f ≫ F.map g ≫ h :=
+  (F.map_comp f g =≫ h).trans <| Category.assoc _ _ _
 
 namespace Functor
 
@@ -119,6 +119,8 @@ theorem congr_map (F : C ⥤ D) {X Y : C} {f g : X ⟶ Y}
 def comp (F : C ⥤ D) (G : D ⥤ E) : C ⥤ E where
   obj X := G.obj (F.obj X)
   map f := G.map (F.map f)
+  map_id X := (congr_arg G.map <| F.map_id X).trans <| G.map_id <| F.obj X
+  map_comp f g := (congr_arg G.map <| F.map_comp f g).trans <| G.map_comp (F.map f) <| F.map g
 
 /-- Notation for composition of functors. -/
 scoped[CategoryTheory] infixr:80 " ⋙ " => Functor.comp
