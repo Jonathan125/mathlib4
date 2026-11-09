@@ -69,16 +69,15 @@ protected theorem hom_comp_app {A : AbstractClone.{u}} {X Y Z : ACtoLT.obj_T A} 
   rfl
 
 protected theorem hcongr_eqToHom_app {A : AbstractClone.{u}} {X Y : ACtoLT.obj_T A} (h : X = Y)
-    (i : Fin X.len) : eqToHom h i ≍ A.υ i :=
-  by obtain rfl : X = Y := h ; rfl
+    (i : Fin X.len) : eqToHom h i ≍ A.υ i := by
+  obtain rfl : X = Y := h ; rfl
 
 end Cat
 
 protected def obj_F (A : AbstractClone.{u}) : FintypeCat.Skeleton.{u} ⥤ ACtoLT.obj_T A where
   obj := id
   map f := fun i ↦ A.υ (f ⟨i⟩).down
-  map_comp f g :=
-    funext <| fun i ↦ Eq.symm <| (ACtoLT.Cat.hom_comp_app _ _ i).trans <| A.projection _ _
+  map_comp f g := funext <| fun i ↦ Eq.symm <| A.projection _ _
 
 
 protected instance F_struct (A : AbstractClone.{u}) : LawvereStruct.{u, u, u} (ACtoLT.obj_F A) where
@@ -86,14 +85,12 @@ protected instance F_struct (A : AbstractClone.{u}) : LawvereStruct.{u, u, u} (A
   initial_to _ := fun i ↦ i.elim0
   coproduct_desc f g := Fin.append f g
   initial_uniq _ := funext <| fun i ↦ i.elim0
-  coproduct_fac_left f g := funext <| fun i ↦ (ACtoLT.Cat.hom_comp_app _ _ i).trans <|
-    (A.projection _ _).trans <| Fin.append_left _ _ _
-  coproduct_fac_right f g := funext <| fun i ↦ (ACtoLT.Cat.hom_comp_app _ _ i).trans <|
-    (A.projection _ _).trans <| Fin.append_right _ _ _
-  coproduct_uniq f g h hl hr := Fin.append_castAdd_natAdd.symm.trans <| congr_arg₂ _
-    (Eq.symm <| hl.symm.trans <| funext <| fun i ↦ (ACtoLT.Cat.hom_comp_app _ _ i).trans <|
-    A.projection _ _) <| Eq.symm <| hr.symm.trans <| funext <| fun i ↦
-    (ACtoLT.Cat.hom_comp_app _ _ i).trans <| A.projection _ _
+  coproduct_fac_left f g := funext <| fun _ ↦ (A.projection _ _).trans <| Fin.append_left _ _ _
+  coproduct_fac_right f g := funext <| fun _ ↦ (A.projection _ _).trans <| Fin.append_right _ _ _
+  coproduct_uniq f g h hl hr :=
+    Fin.append_castAdd_natAdd.symm.trans <|
+    congr_arg₂ _ (Eq.symm <| hl.symm.trans <| funext <| fun _ ↦ A.projection _ _) <|
+    Eq.symm <| hr.symm.trans <| funext <| fun _ ↦ A.projection _ _
 
 
 protected def obj (A : AbstractClone.{u}) : LawvereTheory.{u, u, u} where
@@ -108,7 +105,7 @@ protected def map_hom {A B : AbstractClone.{u}} (f : A ⟶ B) : ACtoLT.obj_T A �
 protected theorem map_comm {A B : AbstractClone.{u}} (f : A ⟶ B) :
     ACtoLT.obj_F A ⋙ ACtoLT.map_hom f = ACtoLT.obj_F B :=
   Functor.ext (fun _ ↦ rfl) <| fun _ _ _ ↦ funext <| fun _ ↦ (f.υ_comm _).trans <| Eq.symm <|
-    (B.projection _ _).trans <| B.projection _ _
+  (B.projection _ _).trans <| B.projection _ _
 
 protected def map {A B : AbstractClone.{u}} (f : A ⟶ B) : ACtoLT.obj A ⟶ ACtoLT.obj B where
   G := ACtoLT.map_hom f

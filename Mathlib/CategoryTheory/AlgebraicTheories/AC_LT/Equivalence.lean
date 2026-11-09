@@ -48,7 +48,8 @@ protected def equivalence : AbstractClone.{u} ≌ LawvereTheory.{u, u, u} where
   inverse := LTtoAC.func
   unitIso := AC_LT.unit
   counitIso := AC_LT.counit
-  functor_unitIso_comp A := LawvereTheory.Hom.ext <| Functor.ext (LawvereTheory.Hom.comp_obj _ _) <|
+  functor_unitIso_comp A :=
+    LawvereTheory.Hom.ext <| Functor.ext (LawvereTheory.Hom.comp_obj _ _) <|
     fun _ _ _ ↦ LTtoAC.coproduct_iso_inv_inj _ _ _ <| (LTtoAC.coproduct_iso_hom_inv_id _ _).trans <|
     funext <| fun _ ↦ funext <| fun _ ↦ Eq.symm <| (A.projection _ _).trans <|
     (A.projection _ _).trans <| A.identity _
